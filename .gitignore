@@ -1,0 +1,16 @@
+# 操作系统/编辑器杂项
+.DS_Store
+Thumbs.db
+*.log
+
+# 本地同步脚本（自用工具，不上传）
+sync_to_github.py
+
+# 临时与依赖
+tmp/
+node_modules/
+__pycache__/
+
+# 本地预览（自用，不上传）
+README-预览.html
+README-en-预览.html

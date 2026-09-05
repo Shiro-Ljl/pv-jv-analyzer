@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>钙钛矿太阳能电池 JV 数据分析工具 v1.1</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- S0 顶部工具栏 -->
+  <header id="toolbar" class="toolbar">
+    <div class="toolbar-left">
+      <span class="app-title"><span data-i18n="toolbar.title">JV 数据分析工具</span><span class="app-version">v1.1</span></span>
+      <button id="btn-open" class="btn btn-primary" type="button" title="选择 CSV/TXT 文件（可多选）" data-i18n="toolbar.addFiles" data-i18n-title="toolbar.addFilesTitle">＋ 添加文件</button>
+      <input type="file" id="file-input" multiple accept=".csv,.txt" hidden>
+      <span class="drop-hint" title="把 CSV / TXT 拖到这里（可追加多个文件）" data-i18n="toolbar.dropHint" data-i18n-title="toolbar.dropHint">拖入 CSV / TXT</span>
+    </div>
+    <div class="toolbar-mid">
+      <div class="lang-switch" role="group" title="切换语言" data-i18n-title="lang.switch">
+        <button id="btn-lang-zh" class="lang-btn active" type="button" title="中文" data-i18n-title="lang.zh">🌐 中</button>
+        <button id="btn-lang-en" class="lang-btn" type="button" title="English" data-i18n-title="lang.en">🌐 EN</button>
+      </div>
+      <div id="file-tabs" class="file-tabs"></div>
+    </div>
+    <div class="toolbar-right">
+      <button id="btn-equiv-analysis" class="btn" type="button" title="表观参数与迟滞诊断：4 张参数分布图（Rs/Rsh/n/J₀）+ 逐条件参考性诊断（表观参数，工程筛选用）" data-i18n="toolbar.equiv" data-i18n-title="toolbar.equivTitle">⚡ 表观诊断</button>
+      <button id="btn-corr-analysis" class="btn" type="button" title="参数相关性分析：8×8 相关性矩阵热图 + 点击格联动散点（含拟合线）" data-i18n="toolbar.corr" data-i18n-title="toolbar.corrTitle">🔗 相关性</button>
+      <button id="btn-name-groups" class="btn" type="button" title="名字分组：块编辑器——点击名字积木分配角色（条件/通道/方向），即时预览" data-i18n="toolbar.nameGroups" data-i18n-title="toolbar.nameGroupsTitle">🧩 分组</button>
+      <button id="btn-export-pdf" class="btn" type="button" title="导出 PDF：标题 + 汇总表 + 合并图 + 各条件详情表（window.print 另存为 PDF）" data-i18n="toolbar.exportPdf" data-i18n-title="toolbar.exportPdfTitle">⤓ PDF</button>
+      <button id="btn-export-html" class="btn" type="button" title="导出当前数据+格式+状态为单文件 HTML，双击即看（请使用发布版单文件）" data-i18n="toolbar.exportHtml" data-i18n-title="toolbar.exportHtmlTitle">⤓ HTML</button>
+      <div id="parse-summary" class="parse-summary" title="解析状态摘要" data-i18n-title="cond.parseSummary"></div>
+    </div>
+  </header>
+
+  <!-- 警告条（解析计数与异常提示） -->
+  <div id="warn-bar" class="warn-bar" hidden>
+    <span id="warn-text"></span>
+    <button id="warn-close" class="warn-close" type="button" title="关闭" data-i18n-title="common.close">×</button>
+  </div>
+
+  <div class="body-wrap">
+
+    <!-- 左栏单列（第八批：条件面板 + 页面导航同列堆叠；导航下滑时 sticky 吸附） -->
+    <div class="side-col">
+
+    <!-- S1 条件选择面板（左侧抽屉） -->
+    <aside id="cond-panel" class="cond-panel">
+      <div class="cond-panel-head">
+        <span id="cond-count" class="cond-count"></span>
+        <button id="btn-collapse" class="btn btn-ghost btn-sm" type="button" title="收起/展开" data-i18n-title="common.collapse">«</button>
+      </div>
+      <div id="cond-first-hint" class="cond-first-hint" data-i18n="cond.baseMark"></div>
+      <div id="cond-list" class="cond-list"></div>
+      <!-- 第三十七批方案B：条件整理工具条（合并/拆分） -->
+      <div class="cond-merge-bar">
+        <button id="cond-merge-mode" class="btn btn-sm" type="button" title="勾选多个条件合并为一个统计；已合并条件可拆分" data-i18n="cond.merge" data-i18n-title="cond.mergeModeTitle">☰ 整理</button>
+        <button id="cond-merge-btn" class="btn btn-sm btn-primary" type="button" hidden data-i18n="cond.mergeSelected">合并所选（0）</button>
+        <button id="cond-merge-exit" class="btn btn-sm" type="button" hidden data-i18n="cond.mergeExit">退出</button>
+      </div>
+    </aside>
+
+    <!-- 页面导航卡片（同列下方，下滑时 sticky 吸附在工具栏下） -->
+    <aside id="nav-panel" class="nav-panel">
+      <div id="page-nav" class="page-nav"></div>
+    </aside>
+
+    </div><!-- /.side-col -->
+
+    <!-- 主内容区 -->
+    <main id="main" class="main">
+
+      <!-- 空状态 -->
+      <div id="empty-state" class="empty-state">
+        <div class="empty-drop">
+          <div class="empty-icon">⤓</div>
+          <p class="empty-title" data-i18n="empty.dropCsv"></p>
+          <p class="empty-steps" data-i18n="empty.steps"></p>
+        </div>
+      </div>
+
+      <!-- S2 汇总区：上下堆叠——汇总表在上、图表区在下（箱线图单张/合并 + JV 叠加；改进8 注释与实际布局一致化） -->
+      <section id="sec-summary" class="section" hidden>
+        <h2 class="section-title" data-i18n="summary.title">汇总与图表</h2>
+        <div class="summary-grid">
+          <div id="summary-table-wrap" class="card summary-table-card"></div>
+          <div class="boxplot-col">
+            <div class="boxplot-toolbar">
+              <span class="boxplot-toolbar-title" data-i18n="summary.charts">图表</span>
+              <div class="view-tabs" id="view-tabs">
+                <button id="btn-view-single" class="view-tab" type="button" title="四张单图（PCE/Voc/Jsc/FF）" data-i18n="view.single" data-i18n-title="view.singleTitle">单张箱线</button>
+                <button id="btn-view-combined" class="view-tab" type="button" title="2×2 合并箱线图" data-i18n="view.combined" data-i18n-title="view.combinedTitle">合并箱线</button>
+                <button id="btn-view-jv" class="view-tab" type="button" title="多条件最高器件 JV 曲线叠加（可切方向/筛条件）" data-i18n="view.jv" data-i18n-title="view.jvTitle">JV 叠加</button>
+              </div>
+            </div>
+            <div id="boxplot-cards" class="boxplot-cards"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- S3 各条件详情表（含 JV 曲线与原始数据折叠，第五批） -->
+      <section id="sec-detail" class="section" hidden>
+        <h2 class="section-title" data-i18n="detail.title">各条件详情表（反扫参数 + HI）</h2>
+        <div id="detail-cards" class="detail-cards"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- 整页拖放遮罩 -->
+  <div id="drop-mask" class="drop-mask" hidden data-i18n="empty.dropMask"></div>
+
+  <!-- 导入方式弹窗：第二个文件起询问（分开两页 / 合并绘制 / 取消） -->
+  <div id="merge-modal" class="modal-mask" hidden>
+    <div class="modal-box">
+      <div class="modal-title" data-i18n="modal.importTitle"></div>
+      <div id="merge-msg" class="modal-msg"></div>
+      <div class="modal-actions">
+        <button id="merge-btn-cancel" class="btn" type="button" data-i18n="common.cancel">取消</button>
+        <button id="merge-btn-split" class="btn" type="button" data-i18n="modal.split"></button>
+        <button id="merge-btn-combine" class="btn btn-primary" type="button" data-i18n="modal.combine"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第三十七批：条件系列合并建议弹窗（同主体多后缀命名 → 用户决定合并为一个条件统计或保持分开） -->
+  <div id="group-modal" class="modal-mask" hidden>
+    <div class="modal-box">
+      <div class="modal-title" data-i18n="modal.groupTitle"></div>
+      <div class="modal-msg" data-i18n="modal.groupMsg"></div>
+      <div id="group-list" class="group-list"></div>
+      <div class="modal-actions">
+        <button id="group-btn-cancel" class="btn" type="button" data-i18n="common.cancel"></button>
+        <button id="group-btn-split-all" class="btn" type="button" data-i18n="modal.keepAll"></button>
+        <button id="group-btn-merge-all" class="btn" type="button" data-i18n="modal.mergeAll"></button>
+        <button id="group-btn-apply" class="btn btn-primary" type="button" data-i18n="modal.apply"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第三十七批方案B：手动合并命名弹窗 -->
+  <div id="cond-merge-modal" class="modal-mask" hidden>
+    <div class="modal-box">
+      <div class="modal-title" data-i18n="modal.mergeTitle"></div>
+      <div id="cond-merge-msg" class="modal-msg"></div>
+      <label class="modal-field">
+        <span data-i18n="modal.mergeName"></span>
+        <input id="cond-merge-name" type="text" placeholder="PVK">
+      </label>
+      <div class="modal-actions">
+        <button id="cond-merge-cancel" class="btn" type="button" data-i18n="common.cancel"></button>
+        <button id="cond-merge-ok" class="btn btn-primary" type="button" data-i18n="modal.merge"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 导出 PDF 弹窗（第十三批 + 第十四批：标题必填 + 备注可空多行 + 版本选择，window.print 方案） -->
+  <div id="pdf-modal" class="modal-mask" hidden>
+    <div class="modal-box">
+      <div class="modal-title" data-i18n="export.pdfTitle"></div>
+      <label class="modal-field">
+        <span data-i18n="pdf.titleLabel"></span>
+        <input id="pdf-title" type="text">
+      </label>
+      <label class="modal-field">
+        <span data-i18n="pdf.noteLabel"></span>
+        <textarea id="pdf-note" rows="3"></textarea>
+      </label>
+      <label class="modal-field">
+        <span data-i18n="pdf.contentLabel"></span>
+        <span class="pdf-equiv-row">
+          <input id="pdf-equiv" type="checkbox" checked>
+          <span class="pdf-equiv-label" data-i18n="pdf.equivLabel"></span>
+        </span>
+      </label>
+      <div class="modal-actions">
+        <button id="pdf-btn-cancel" class="btn" type="button" data-i18n="common.cancel"></button>
+        <button id="pdf-btn-ok" class="btn btn-primary" type="button" data-i18n="export.exportBtn"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- P1：等效电路分析（分析视图：4 张参数图 + 逐条件诊断卡 + Base 选择；参考性解读） -->
+  <div id="equiv-modal" class="modal-mask equiv-mask" hidden>
+    <div class="modal-box equiv-box">
+      <div class="equiv-head">
+        <span class="modal-title" data-i18n="equiv.title">⚡ 表观参数与迟滞诊断（工程筛选）</span>
+        <div class="equiv-head-btns">
+          <button id="equiv-format" class="btn btn-sm" type="button" title="单独调整本页 4 张图的字号/线宽/透明度（与主图格式并存）" data-i18n="style.equivFormat" data-i18n-title="style.equivFormatTitle">🎨 格式</button>
+          <button id="help-equiv" class="btn btn-sm btn-help-warn" type="button" title="查看分析说明：方法局限、迟滞与扫描速度影响——读数前请先读" data-i18n="equiv.help" data-i18n-title="equiv.helpTitle">⚠ 说明（必读）</button>
+          <button id="equiv-close" class="lightbox-close" type="button" title="关闭（Esc）" data-i18n-title="common.closeEsc">✕</button>
+        </div>
+      </div>
+      <div class="equiv-fmt-hint" id="equiv-fmt-hint" data-i18n="equiv.fmtHint">本页 4 图的字号/线宽/透明度可单独调整（点「🎨 格式」）；「诊断阈值」（迟滞差 Δn/Δlog₁₀J₀）、Rs 修正开关与测试温度也在其中，改动后诊断卡与图即时更新。Rs/Rsh 为仪器给定值（面积归一化口径见说明）；主题色随主图「⚙ 调整格式」。</div>
+      <div class="equiv-toolbar">
+        <div class="equiv-base-row">
+          <span class="equiv-base-label" data-i18n="equiv.baseLabel"></span>
+          <select id="equiv-base" class="equiv-base-select"></select>
+          <span class="equiv-base-hint" data-i18n="equiv.baseHint"></span>
+          <span id="equiv-j0-na" class="equiv-j0-na"></span>
+        </div>
+      </div>
+      <div class="equiv-body">
+        <div class="equiv-charts">
+          <div class="equiv-fig">
+            <div class="equiv-fig-title" data-i18n="equiv.figRs"></div>
+            <div id="equiv-chart-rs" class="equiv-chart"></div>
+          </div>
+          <div class="equiv-fig">
+            <div class="equiv-fig-title" data-i18n="equiv.figRsh"></div>
+            <div id="equiv-chart-rsh" class="equiv-chart"></div>
+          </div>
+          <div class="equiv-fig">
+            <div class="equiv-fig-title" data-i18n="equiv.figN"></div>
+            <div id="equiv-chart-n" class="equiv-chart"></div>
+          </div>
+          <div class="equiv-fig">
+            <div class="equiv-fig-title" data-i18n="equiv.figJ0"></div>
+            <div id="equiv-chart-j0" class="equiv-chart"></div>
+          </div>
+        </div>
+        <div class="equiv-cards-col">
+          <div id="equiv-format-panel" class="equiv-format-panel" style="display:none"></div>
+          <div class="equiv-cards-title" data-i18n="equiv.cardsTitle"></div>
+          <div id="equiv-cards" class="equiv-cards"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 图表点击放大（Lightbox）：点 ✕ / 图外暗区 / Esc 关闭 -->
+  <div id="chart-lightbox" class="lightbox-mask" hidden>
+    <div class="lightbox-body">
+      <button id="lightbox-close" class="lightbox-close" type="button" title="关闭（Esc）" data-i18n="lightbox.close" data-i18n-title="common.closeEsc">✕</button>
+      <div id="lightbox-title" class="lightbox-title"></div>
+      <div id="lightbox-chart" class="lightbox-chart"></div>
+      <div class="lightbox-actions">
+        <button id="lightbox-zoom-in" class="btn btn-sm" type="button" title="放大" data-i18n="lightbox.zoomIn" data-i18n-title="lightbox.zoomIn">➕</button>
+        <button id="lightbox-zoom-out" class="btn btn-sm" type="button" title="缩小" data-i18n="lightbox.zoomOut" data-i18n-title="lightbox.zoomOut">➖</button>
+        <button id="lightbox-zoom-reset" class="btn btn-sm" type="button" title="恢复到 1x 居中" data-i18n="lightbox.reset" data-i18n-title="lightbox.resetTitle">重置</button>
+        <button id="lightbox-copy" class="btn btn-sm" type="button" data-i18n="lightbox.copy">⧉ 复制图片</button>
+        <button id="lightbox-svg" class="btn btn-sm" type="button" data-i18n="lightbox.downloadSvg">⤓ 下载矢量图</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 图像格式调整器（第二十四批） -->
+  <div id="style-editor" class="style-editor-mask" hidden>
+    <div class="style-editor-box">
+      <div class="style-editor-head">
+        <span class="style-editor-title" data-i18n="style.title">调整图像格式</span>
+        <div class="style-kind-tabs">
+          <button id="style-kind-single" class="style-kind-tab active" type="button" data-i18n="style.single">单图</button>
+          <button id="style-kind-combined" class="style-kind-tab" type="button" data-i18n="style.combined">合并图</button>
+          <button id="style-kind-jv" class="style-kind-tab" type="button">JV</button>
+          <button id="style-kind-jvOverlay" class="style-kind-tab" type="button" data-i18n="style.jvOverlay">JV 叠加</button>
+        </div>
+        <button id="style-editor-close" class="lightbox-close" type="button" title="关闭（Esc）" data-i18n="lightbox.close" data-i18n-title="common.closeEsc">✕</button>
+      </div>
+      <div class="style-editor-body">
+        <div id="style-console" class="style-console"></div>
+        <div class="style-preview-wrap">
+          <div id="style-preview" class="style-preview"></div>
+          <div class="style-preview-actions">
+            <button id="style-copy" class="btn btn-sm" type="button" data-i18n="style.copy">⧉ 复制图片</button>
+            <button id="style-svg" class="btn btn-sm" type="button" data-i18n="style.downloadSvg">⤓ 下载矢量图</button>
+            <button id="style-reset" class="btn btn-sm" type="button" data-i18n="style.reset">↺ 恢复默认</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- P3：参数相关性分析（8×8 矩阵热图 + 点击格联动散点；条件选择 + 参考性结论） -->
+  <div id="corr-modal" class="modal-mask corr-mask" hidden>
+    <div class="modal-box corr-box">
+      <div class="corr-head">
+        <span class="modal-title" data-i18n="corr.title">🔗 参数相关性分析</span>
+        <div class="equiv-head-btns">
+          <button id="help-corr" class="btn btn-sm" type="button" title="查看分析说明" data-i18n="equiv.help" data-i18n-title="equiv.helpTitle">ℹ 说明</button>
+          <button id="corr-close" class="lightbox-close" type="button" title="关闭（Esc）" data-i18n-title="common.closeEsc">✕</button>
+        </div>
+      </div>
+      <div class="corr-sub" data-i18n="corr.sub"></div>
+      <div class="corr-sel-bar">
+        <span class="corr-sel-label" data-i18n="cond.label"></span>
+        <button id="corr-sel-all" class="btn btn-sm" type="button" data-i18n="corr.selectAll"></button>
+        <button id="corr-sel-none" class="btn btn-sm" type="button" data-i18n="corr.clear"></button>
+        <span id="corr-sel-box" class="corr-sel-box"></span>
+        <span class="corr-sel-label corr-mode-label" data-i18n="corr.modeLabel"></span>
+        <select id="corr-mode" class="corr-mode-select" title="n/J₀ 取数口径：汇总=正反扫拟合平均（默认）；反扫/正扫=仅用该方向。PCE/Voc/Jsc/FF 始终反扫优先。单扫器件在非对应口径下不参与 n/J₀ 相关。" data-i18n-title="corr.modeTitle">
+          <option value="avg" data-i18n="corr.modeAvg"></option>
+          <option value="rev" data-i18n="corr.modeRev"></option>
+          <option value="fwd" data-i18n="corr.modeFwd"></option>
+        </select>
+      </div>
+      <div class="corr-body">
+        <div class="corr-matrix-col">
+          <div class="corr-fig-title" data-i18n="corr.matrixTitle"></div>
+          <div id="corr-matrix" class="corr-matrix"></div>
+        </div>
+        <div class="corr-scatter-col">
+          <div id="corr-scatter-title" class="corr-fig-title corr-scatter-title"></div>
+          <div id="corr-scatter" class="corr-scatter"></div>
+          <div class="corr-fig-title corr-fig-title-mt" data-i18n="corr.summaryTitle"></div>
+          <div id="corr-summary" class="corr-summary"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+
+  <!-- v1.1-I3：名称解析预览面板（低置信/多模板时自动弹出，交互兜底） -->
+  <div id="name-preview-modal" class="modal-mask" hidden>
+    <div class="modal-box">
+      <div class="modal-title" data-i18n="namePreview.title"></div>
+      <button id="help-namegroups" class="btn btn-sm btn-help" type="button" title="查看使用说明：怎么分组、三个概念、常见问题" data-i18n="nameGroups.help" data-i18n-title="nameGroups.helpTitle">ℹ 说明</button>
+      <div class="modal-msg" data-i18n="namePreview.desc"></div>
+      <div id="name-preview-body" class="name-preview-body"></div>
+      <div class="modal-actions">
+        <button id="name-preview-keep" class="btn" type="button" data-i18n="namePreview.keep"></button>
+        <button id="name-preview-apply" class="btn btn-primary" type="button" data-i18n="namePreview.apply"></button>
+        <button id="name-preview-clear" class="btn" type="button" data-i18n="namePreview.clear"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- v1.2-I3：名字理解向导（导入自动弹，spec 5.1/5.2） -->
+  <div id="name-guide-modal" class="modal-mask" hidden>
+    <div class="modal-box">
+      <div class="modal-title" data-i18n="nameGuide.title"></div>
+      <div id="name-guide-body" class="name-guide-body"></div>
+      <div class="modal-actions">
+        <button id="name-guide-back" class="btn" type="button" data-i18n="nameGuide.back"></button>
+        <button id="name-guide-next" class="btn btn-primary" type="button" data-i18n="nameGuide.next"></button>
+        <button id="name-guide-cancel" class="btn" type="button" data-i18n="nameGuide.cancel"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- t4-3：分析说明模态（equiv / corr 共用；内容来自 js/help_content.js） -->
+  <div id="help-modal" class="modal-mask help-mask" hidden>
+    <div class="modal-box help-box">
+      <div class="help-head">
+        <span id="help-title" class="modal-title" data-i18n="help.title">分析说明</span>
+        <button id="help-close" class="lightbox-close" type="button" title="关闭（Esc）" data-i18n-title="common.closeEsc">✕</button>
+      </div>
+      <div id="help-body" class="help-body"></div>
+    </div>
+  </div>
+
+  <!-- 打印/PDF 区域（第十三批：window.print 方案；默认隐藏，@media print 时显示） -->
+  <div id="print-area" class="print-area"></div>
+
+  <!-- 依赖顺序：parser → tables → charts → ui →（P1）fit → help_content → analysis →（P3）corr → main →（P1 UI）equiv_ui →（P3 UI）corr_ui -->
+  <script src="js/i18n.js"></script>
+  <script src="lib/echarts.min.js"></script>
+  <script src="js/parser.js"></script>
+  <script src="js/tables.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/fit.js"></script>
+  <script src="js/help_content.js"></script>
+  <script src="js/analysis.js"></script>
+  <script src="js/corr.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/equiv_ui.js"></script>
+  <script src="js/corr_ui.js"></script>
+</body>
+</html>
