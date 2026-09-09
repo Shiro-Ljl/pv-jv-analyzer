@@ -83,7 +83,7 @@ The tool decomposes exported names along three dimensions — **condition / chan
 | `1.CH_Ref.Reverse(1)` | condition `1`, direction word kept | Reverse/Forward auto-detected |
 | `Sample-A 1 (X.CH_Ref(1))` | condition `Sample-A 1`, channel in parentheses | nested parentheses supported |
 | `PVK-1 Device 3` | condition `PVK-1` | Device-block naming |
-| `Base-15%MACl` / `Condition 1` | single condition | grouped as-is (no channel slot) |
+| `Base-15% Mod` / `Condition 1` | single condition | grouped as-is (no channel slot) |
 
 Since v1.1 no regex knowledge is needed: when a naming difference is detected on import the tool only shows a light 2-second toast (no interruption), and the **🧩 Condition Grouping** button in the toolbar is always there:
 

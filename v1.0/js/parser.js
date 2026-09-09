@@ -221,8 +221,8 @@
    * 第三十七批：条件系列检测与合并（导入时"用户决策"弹窗的数据层）
    *   seriesCore：剥离尾部/头部后缀得主体
    *     尾部：PVK-1→PVK、QX1→QX、PVK-a→PVK（数字串可无分隔符、单字母须有分隔符；
-   *           无分隔符字母结尾单词不剥：PVK/GuaSCN/2D PSS）
-   *     头部（第三十七批补充：序号标前面的命名）：0.1 CTAB→CTAB、0.1CTAB→CTAB、0.5 Mod→sam
+   *           无分隔符字母结尾单词不剥：PVK/Add-A/2D Add）
+   *     头部（第三十七批补充：序号标前面的命名）：0.1 Mod→Mod、0.1Mod→Mod、0.5 Mod→Mod
    *           纯数字+点前缀（0.1/1.0/0.5），2D/3D 等"数字+字母"不剥
    *     含括号（包装形态 1 (PVK-1)）与纯数字名排除
    *   detectGroupCandidates：同主体 + 不同名字 ≥2 → 候选组（单成员不提示）
@@ -231,19 +231,19 @@
   function seriesCore(name) {
     var n = normalizeText(name);
     if (n === '' || /[()]/.test(n)) return null;
-    // 1) 尾部后缀剥离（优先：先消歧最具体的差异，0.1 CTAB-1 → 0.1 CTAB）
+    // 1) 尾部后缀剥离（优先：先消歧最具体的差异，0.1 Mod-1 → 0.1 Mod）
     var m = /^(.*?)([-\s]?)([0-9]+|[A-Za-z])$/.exec(n);
     if (m && m[1] !== '' && m[1] !== n) {
       if (!(/^[A-Za-z]$/.test(m[3]) && m[2] === '')) return m[1]; // 无分隔符单词不剥
     }
-    // 2) 头部数字前缀剥离（序号标前面：0.1 CTAB / 0.1CTAB / 0.5 Mod；2D/3D 等"数字+字母"不剥）
-    //    完整小数（0.1/1.0）可紧跟主体（0.1CTAB）或带分隔；纯整数（1/2）必须带分隔符（1 sam）
+    // 2) 头部数字前缀剥离（序号标前面：0.1 Mod / 0.1Mod / 0.5 Mod；2D/3D 等"数字+字母"不剥）
+    //    完整小数（0.1/1.0）可紧跟主体（0.1Mod）或带分隔；纯整数（1/2）必须带分隔符（1 Mod）
     var hm = /^(?:(\d+\.\d+)[\s-]?|(\d+)[\s-])(.+)$/.exec(n);
     if (hm && hm[3] !== '') return hm[3];
     return null;
   }
 
-  /** 系列尾部序号剥离（t95/t99：-N/空格N 后缀→主体——26-1/32-2/23-2 型用户习惯；纯数字/无分隔符字母不剥——
+  /** 系列尾部序号剥离（t95/t99：-N/空格N 后缀→主体——31-1/41-2/43-2 型用户习惯；纯数字/无分隔符字母不剥——
    *  与 seriesCore 通用剥离不同：浓度/前缀变体（0.1 Mod）与无分隔符字母（R1/R2）是不同条件不并）；
    *  detectGroupCandidates（候选弹窗）/seriesMerge（画板系列归并）/applyGroupDecisions（落地）统一判据。 */
   function seriesTailCore(name) {
@@ -262,7 +262,7 @@
       groups[core].names[c.name] = true;
       groups[core].devices += (c.devices || []).length;
     });
-    // t99：主体组纳入（23 与 23-2 同系列——主体自身参与——23/23-2 进候选不再残留）
+    // t99：主体组纳入（43 与 43-2 同系列——主体自身参与——43/43-2 进候选不再残留）
     (conditions || []).forEach(function (c) {
       var base = String(c.name).replace(/\.CH_Ref\(\d+\)|\.Device\(\d+\)\s*$/g, '').trim();
       var g = groups[base];
@@ -286,7 +286,7 @@
     Object.keys(decisions || {}).forEach(function (k) {
       if (decisions[k] === 'merge') mergeCores[k] = true;
     });
-    // t99：落地判据与候选统一（seriesTailCore——23/23-2 合并生效；无分隔符字母（R1/R2）不并）
+    // t99：落地判据与候选统一（seriesTailCore——43/43-2 合并生效；无分隔符字母（R1/R2）不并）
     var result = conditions.filter(function (c) {
       var core = seriesTailCore(c.name);
       return !(core && mergeCores[core]);
@@ -761,7 +761,7 @@
     }
     if (key === '') return null;
     // t77：语义名整名判据（替代 t65/67 的「键无字母」代理判据）——名字无模板结构（CH_Ref/Device）→ 键=整名：
-    // t67 判据对点分隔语义名失效（'MA0.05 150-1' 块0='MA0' 含字母 → 键撕裂 'MA0'）；模板命中型保持模板键
+    // t67 判据对点分隔语义名失效（'Mod0.05 150-1' 块0='Mod0' 含字母 → 键撕裂 'Mod0'）；模板命中型保持模板键
     if (!/(CH_Ref|Device)/.test(name)) return name;
     return key;
   }

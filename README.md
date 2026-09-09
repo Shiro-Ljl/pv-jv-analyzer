@@ -83,7 +83,7 @@
 | `1.CH_Ref.Reverse(1)` | 条件 `1`，含方向词 | Reverse/Forward 自动识别 |
 | `Sample-A 1 (X.CH_Ref(1))` | 条件 `Sample-A 1`，括号内通道 | 括号嵌套也可识别 |
 | `PVK-1 Device 3` | 条件 `PVK-1` | Device 块命名 |
-| `Base-15%MACl` / `Condition 1` | 单条件 | 无通道档，按原文归组 |
+| `Base-15% Mod` / `Condition 1` | 单条件 | 无通道档，按原文归组 |
 
 工具（v1.1+）不用写正则：导入时检测到命名差异只轻提示一下（2 秒 toast，不打扰），之后随时点工具栏「🧩 条件分组」：
 

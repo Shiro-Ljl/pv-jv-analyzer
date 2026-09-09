@@ -429,7 +429,7 @@
 
   /** X 轴标签旋转后的横向伸出量（第二十批，修单图最右/最左标签被画布裁剪）：
    *   rotate 时最长标签（截断后）绕中心旋转，中心贴 plot 边缘，向 plot 外伸出 ≈ W/2·|cos| + fs/2·|sin|。
-   *   left/right 边距需 ≥ 该值，否则长条件名（如 "DCz:Me-4P(base)"）被容器裁掉。 */
+   *   left/right 边距需 ≥ 该值，否则长条件名（如 "X:Y(base)"）被容器裁掉。 */
   function xLabelReach(sc, names, rotateOverride, truncate) {
     var st = styleNS || chartStyle.single;
     var n = names ? names.length : 0;

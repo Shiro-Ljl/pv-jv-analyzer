@@ -394,8 +394,8 @@
       return out;
     }
     var ROLE_LABEL = { cond: 'nameBlocks.cond', channel: 'nameBlocks.channel', seq: 'nameBlocks.seq', direction: 'nameBlocks.direction', ignored: 'nameBlocks.ignored', auto: 'nameBlocks.auto' };
-    /** t93：系列归并——同主体系列组卡合并（26-1/2/3/4→组名 26；主体≥2 组才触发——单组/异主体不误并）
-     *  t95：主体组（自身 core=null 如 '32'）纳入成员集——32+32-2（单子成员）时也触发（否则 32-2 残留独立）
+    /** t93：系列归并——同主体系列组卡合并（31-1/2/3/4→组名 31；主体≥2 组才触发——单组/异主体不误并）
+     *  t95：主体组（自身 core=null 如 '41'）纳入成员集——41+41-2（单子成员）时也触发（否则 41-2 残留独立）
      *  t99：主体判定=共享 P.seriesTailCore（候选弹窗/系列归并/落地统一判据） */
     function seriesMerge() {
       var groups = computeGroups();
@@ -406,7 +406,7 @@
         if (!byCore[core]) { byCore[core] = []; order.push(core); }
         if (byCore[core].indexOf(g.key) < 0) byCore[core].push(g.key);
       });
-      // 主体组加入（keys 中存在主体——32 组被 32-2 剥离指向）
+      // 主体组加入（keys 中存在主体——41 组被 41-2 剥离指向）
       groups.forEach(function (g) {
         var base = String(g.key).replace(/\.CH_Ref\(\d+\)|\.Device\(\d+\)\s*$/g, '').trim();
         if (byCore[base] && byCore[base].indexOf(g.key) < 0) byCore[base].push(g.key);
@@ -786,7 +786,7 @@
       }
       return [card.repName];
     }
-    /** t113：系列主体徽标文本——有尾号→主体名（23-2→23）；自身被其他卡指为系列主体→自身（23）；否则 null（不显示徽章）
+    /** t113：系列主体徽标文本——有尾号→主体名（43-2→43）；自身被其他卡指为系列主体→自身（43）；否则 null（不显示徽章）
      *  （与 detectGroupCandidates/seriesMerge 的 P.seriesTailCore 统一判据一致） */
     function nbFamilyCoreOf(name) {
       var core = P.seriesTailCore(name);
@@ -930,7 +930,7 @@
       var groups = computeGroups();
       var html = nbViewsegHtml(); // t39：视图切换（自动分组=默认 / 手动分组画板）
       // t103：系列归并/合并建议入口两视图共有且醒目（viewseg 下公共行——manual 同位置）
-      html += '<div class="nb-toolbar"><button type="button" class="nb-btn" data-nbop="seriesMerge" title="' + esc(isEn ? 'Merge series groups (e.g. 26-1/2/3/4 -> 26) — based on the same root series' : '按同主体系列归并（如 26-1/2/3/4 → 26）——仅当同主体多于一组') + '">' + esc(isEn ? '⧉ Merge series' : '⧉ 系列归并') + '</button>' +
+      html += '<div class="nb-toolbar"><button type="button" class="nb-btn" data-nbop="seriesMerge" title="' + esc(isEn ? 'Merge series groups (e.g. 31-1/2/3/4 -> 31) — based on the same root series' : '按同主体系列归并（如 31-1/2/3/4 → 31）——仅当同主体多于一组') + '">' + esc(isEn ? '⧉ Merge series' : '⧉ 系列归并') + '</button>' +
         '<button type="button" class="nb-btn" data-nbop="suggestMerge" title="' + esc(isEn ? 'Re-open condition-series merge suggestions for the current conditions' : '重新检测条件合并建议（当前条件集）——与导入时同款候选窗') + '">' + esc(isEn ? '↺ Merge suggestions' : '↺ 合并建议') + '</button></div>';
       html += '<div class="nb-scrollbody">'; // t71：滚动区（操作条/摘要固定在外，内容区独立滚动）
       // N-r6-3：纯系统名文件空屏引导（两视图通用——默认手动视图 0 卡也提示）
