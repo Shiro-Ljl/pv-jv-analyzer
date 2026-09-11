@@ -132,6 +132,8 @@
    *  rec: { name, dir, jvDirAssigned }；ctx: { mode, nameManualMap }；nameRules/guidedRule 为模块态。
    *  返回 { key: string|null, sys: boolean }——sys = guided 模式系统名行（关专用容器语义）。 */
   function resolveConditionKey(rec, ctx) {
+    // 宽表变体：条件名由解析期的「顺序切组」给定——位置语义无法用名称规则表达，故最高优先
+    if (rec && rec.condFixedName) return { key: rec.condFixedName, sys: false };
     var mode = ctx && ctx.mode;
     if (mode === 'user') return { key: userRuleKey(rec.name), sys: false };
     if (mode === 'guided') {
@@ -650,6 +652,7 @@
     for (var i = 0; i < records.length - 1; i++) {
       var a = records[i], b = records[i + 1];
       if (a.dir !== 0 || b.dir !== 0 || a.name === '' || a.name !== b.name) continue;
+      if (a.condFixedName || b.condFixedName) continue; // 变体：条件名由位置切分给定，不做相邻同名配对
       a.dir = 1; b.dir = -1; // 仪器约定：同名两块相邻 = 正反扫对（Forward/Reverse）
       n++;
       i++;
@@ -868,6 +871,125 @@
   }
 
   /* ================================================================
+   * 格式 A 变体（宽表）：无 [Information] 标记行的 JV 块
+   *   与标准格式的差别：① 通道块无 [Information] 标记；② JV 表头为裸 Volt (V)/I (mA)/J (mA/cm^2)（无方括号）；
+   *   ③ 参数元数据（Area/Step…）在块上方、字段名只在 col0、值位于各块起始列；
+   *   ④ 同一条件的多个块共用一个 Time Stamp 值 → 顺序切组（同名通道跨条件不再并组）。
+   *   仅在标准 [Information] 探测零通道时启用 → 标准格式与既有基线零影响。
+   * ================================================================ */
+  /** 标记行探测：段内首个含「连续三列 volt (v) / i (ma) / j (ma/cm^2)」的行；返回 {markerRow, starts:[块起始列]} */
+  function scanPlainJvBlocks(grid, segStart, headerRow, maxCol) {
+    for (var r = segStart; r < headerRow; r++) {
+      var row = grid[r] || [];
+      var lim = Math.min(row.length, maxCol);
+      for (var c = 0; c + 2 < lim; c++) {
+        if (normalizeText(row[c]).toLowerCase() !== 'volt (v)') continue;
+        if (normalizeText(row[c + 1]).toLowerCase() !== 'i (ma)') continue;
+        if (normalizeText(row[c + 2]).toLowerCase() !== 'j (ma/cm^2)') continue;
+        var starts = [];
+        for (var c2 = 0; c2 + 2 < lim; c2++) {
+          if (normalizeText(row[c2]).toLowerCase() === 'volt (v)' &&
+              normalizeText(row[c2 + 1]).toLowerCase() === 'i (ma)' &&
+              normalizeText(row[c2 + 2]).toLowerCase() === 'j (ma/cm^2)') {
+            starts.push(c2);
+          }
+        }
+        return { markerRow: r, starts: starts };
+      }
+    }
+    return null;
+  }
+
+  /** 块名行：优先 col0 === 'name' 的行；否则取最早一行「各块起始列全非空且非全数字」（参数值行全为数字被排除） */
+  function findPlainNameRow(grid, segStart, markerRow, starts) {
+    var fallback = -1;
+    for (var r = segStart; r < markerRow; r++) {
+      var row = grid[r] || [];
+      if (normalizeText(row[0]).toLowerCase() === 'name') return r;
+      if (fallback >= 0) continue;
+      var all = true, hasText = false;
+      for (var i = 0; i < starts.length; i++) {
+        var t = normalizeText(row[starts[i]]);
+        if (t === '') { all = false; break; }
+        if (!isNum(toNumber(t))) hasText = true;
+      }
+      if (all && hasText) fallback = r;
+    }
+    return fallback;
+  }
+
+  /** 时间戳行：col0 为 time stamp / timestamp（含单位后缀变体）；无则返回 -1 */
+  function findPlainTimeRow(grid, segStart, markerRow) {
+    for (var r = segStart; r < markerRow; r++) {
+      var t = normalizeText((grid[r] || [])[0]).toLowerCase().replace(/\s+/g, ' ');
+      if (t === 'time stamp' || t === 'timestamp' || t === 'time stamp (s)' || t === 'time stamps') return r;
+    }
+    return -1;
+  }
+
+  /** 顺序切组：同一时间戳的连续块 = 一个条件；条件名 = 组首块名（重名自动加 (2)/(3)…防并组）。
+   *  无时间戳行时每块独立成条件（保守——不猜分组）。返回 每块的条件名数组。 */
+  function buildPlainGroupNames(grid, starts, nameRow, timeRow) {
+    var names = [];
+    for (var i = 0; i < starts.length; i++) {
+      names.push(normalizeText((grid[nameRow] || [])[starts[i]]));
+    }
+    var used = {}, out = new Array(starts.length);
+    function flushGroup(a, b) {
+      var base = names[a] !== '' ? names[a] : ('Cond-' + (a + 1));
+      used[base] = (used[base] || 0) + 1;
+      var label = used[base] > 1 ? (base + '(' + used[base] + ')') : base;
+      for (var k = a; k <= b; k++) out[k] = label;
+    }
+    var groupStart = 0;
+    for (var j = 1; j <= starts.length; j++) {
+      var same = false;
+      if (j < starts.length && timeRow >= 0) {
+        var tv = normalizeText(grid[timeRow][starts[j]]);
+        var pv = normalizeText(grid[timeRow][starts[j - 1]]);
+        same = (tv !== '' && tv === pv);
+      }
+      if (!same) { flushGroup(groupStart, j - 1); groupStart = j; }
+    }
+    return out;
+  }
+
+  /** 变体通道对象：与 [Information] 通道同构（isValid/jv/area/proto），供 JV 关联与统计复用 */
+  function buildPlainChannels(grid, pl, segStart, headerRow) {
+    var chans = [];
+    for (var i = 0; i < pl.starts.length; i++) {
+      var start = pl.starts[i];
+      var ch = {
+        startCol: start, headerRow: pl.markerRow, isValid: true, jv: [], area: null,
+        vCol: start, iCol: start + 1, jCol: start + 2
+      };
+      // JV 数据：标记行之下、参数表头行之上（三列齐数值）
+      for (var r = pl.markerRow + 1; r < headerRow; r++) {
+        var g = grid[r] || [];
+        var v = toNumber(g[ch.vCol]), ic = toNumber(g[ch.iCol]), jd = toNumber(g[ch.jCol]);
+        if (isNum(v) && isNum(ic) && isNum(jd)) ch.jv.push([v, ic, jd]);
+      }
+      // 参数元数据：字段名只在 col0，值位于本块起始列（Area 缺失→null）
+      for (var r2 = segStart; r2 < headerRow; r2++) {
+        var g2 = grid[r2] || [];
+        var lbl = normalizeText(g2[0]).toLowerCase();
+        if (lbl === '') continue;
+        if (lbl === 'area (cm^2)') { var a = toNumber(g2[start]); if (isNum(a)) ch.area = a; }
+        else if (lbl === 'step (v)') ch.stepV = toNumber(g2[start]);
+        else if (lbl === 'delay (ms)') ch.delayMs = toNumber(g2[start]);
+        else if (lbl === 'temperature (degc)' || lbl === 'degc') ch.tempDegC = toNumber(g2[start]);
+        else if (lbl === 'light intensity (sun)' || lbl === 'sun') ch.lightSun = toNumber(g2[start]);
+        else if (lbl === 'reverse data') {
+          var rf = normalizeText(g2[start]).toLowerCase();
+          ch.reverseFlag = rf === 'true' ? true : (rf === 'false' ? false : null);
+        }
+      }
+      chans.push(ch);
+    }
+    return chans;
+  }
+
+  /* ================================================================
    * 格式 A：仪器原始格式解析（4.3-4.6、5.2-5.10）
    * ================================================================ */
   /** R1：格式 A records 提取段（原 parseRawFormat 前半——物理拆分，行为不变）；返回 null=表头缺失 */
@@ -908,6 +1030,18 @@
           if (normalizeText(grid[r][c]).toLowerCase() === '[information]') {
             segChannels.push({ startCol: c, headerRow: r, isValid: false, jv: [], area: null });
             break;
+          }
+        }
+      }
+      /* ---- 5.4b 宽表变体：无 [Information] 标记 → 裸 Volt (V) 标记行探测 + 按时间戳顺序切组 ---- */
+      var segFixedNames = null;
+      if (!segChannels.length) {
+        var pl = scanPlainJvBlocks(grid, segStart, headerRow, maxCol);
+        if (pl && pl.starts.length) {
+          var plNameRow = findPlainNameRow(grid, segStart, pl.markerRow, pl.starts);
+          if (plNameRow >= 0) {
+            segChannels = buildPlainChannels(grid, pl, segStart, headerRow);
+            segFixedNames = buildPlainGroupNames(grid, pl.starts, plNameRow, findPlainTimeRow(grid, segStart, pl.markerRow));
           }
         }
       }
@@ -993,6 +1127,11 @@
           rs: map['Rs (ohm)'] >= 0 ? toNumber(grid[r4][map['Rs (ohm)']]) : NaN,
           rsh: map['Rsh (ohm)'] >= 0 ? toNumber(grid[r4][map['Rsh (ohm)']]) : NaN
         };
+        // 变体：条件名由「顺序切组」给定（块级位置语义）——覆盖按名归并（同名通道跨条件不再并组）
+        if (segFixedNames) {
+          var fxIdx = records.length - segRecStart;
+          if (fxIdx < segFixedNames.length) rec.condFixedName = segFixedNames[fxIdx];
+        }
         // P3：物理边界计数（仅告警不改数据）——Area≤0 / Eff<0 / |Voc|>3V / |Jsc|>1000mA/cm²
         if ((isNum(rec.area) && rec.area <= 0) || (isNum(rec.eff) && rec.eff < 0) ||
             (isNum(rec.voc) && Math.abs(rec.voc) > 3) || (isNum(rec.jsc) && Math.abs(rec.jsc) > 1000)) {
@@ -1007,6 +1146,11 @@
   /** R1：条件分组/正反扫配对/JV 关联/统计（原 parseRawFormat 后半——唯一组装：parseFile 与 groupsToConditions 共用；行为不变） */
   function parseRawAssemble(pr) {
     var records = pr.records, channels = pr.channels, physOut = pr.physOut, dirInvalid = pr.dirInvalid;
+    // 宽表变体：存在位置切组的固定条件名 → 名称预览不适用（走 conditions 事实源）
+    var hasCondFixed = false;
+    for (var __fi = 0; __fi < records.length; __fi++) {
+      if (records[__fi].condFixedName) { hasCondFixed = true; break; }
+    }
 
     /* ---- 4.6 + 5.5 条件分组与正反扫配对（改动 1：落单降级为单方向器件） ---- */
     var conditions = [], conditionMap = {}, pendingForward = [];
@@ -1226,7 +1370,9 @@
       conditions: conditions,
       stats: stats,
       appliedTemplate: appliedTemplate, // v1.1-I2：模板命中信息透传（{source:'user'|'tpl', id, signature} 或 null）
-      namePreview: buildNamePreview(records) // v1.1-I3：解析预览（原名/模板/主键/通道/方向；>40 记录才附）
+      // v1.1-I3：解析预览（原名/模板/主键/通道/方向；>40 记录才附）——变体（位置切组）不适用名称预览，
+      // 置 null 走「事实源=当前 conditions」重建（分组面板即解析后的正确分组）
+      namePreview: hasCondFixed ? null : buildNamePreview(records)
     };
   }
 
