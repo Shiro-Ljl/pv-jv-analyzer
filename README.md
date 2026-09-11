@@ -35,7 +35,7 @@
 
 ## 下载与使用
 
-打开 [Releases](releases/latest) 页面，下载 `JV Data Analysis Tool v1.1.html`，双击就能用，不用装 Python 也不用 clone 源码。Releases 里的文件和源码构建出的产物完全一致。
+打开 [Releases](releases/latest) 页面，下载 `JV Data Analysis Tool v1.1.1.html`，双击就能用，不用装 Python 也不用 clone 源码。Releases 里的文件和源码构建出的产物完全一致。
 
 1. 打开页面，把仪器导出的 CSV/TXT 拖进去（或点「添加文件」）。第一次用可以先拖仓库里的样例数据 `v1.0/样例数据/Sample Data.csv`（真实测量数据的脱敏版：条件名已匿名化为 Condition 1~5 加一个 Base）。如果弹出「条件合并建议」是因为样例条件名是同名系列命名，选「全部保持」即可
 2. 左侧勾选要对比的条件，可以改名、设 Base 基准
@@ -118,7 +118,7 @@ cd v1.0
 python build_single.py
 ```
 
-产物为 `JV Data Analysis Tool v1.1.html`——CSS/JS/ECharts 全部内联，拷走就能用。
+产物为 `JV Data Analysis Tool v1.1.1.html`——CSS/JS/ECharts 全部内联，拷走就能用。
 
 ## 许可
 

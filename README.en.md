@@ -35,7 +35,7 @@ The hysteresis diagnostics view: parameter distributions on the left, per-condit
 
 ## Getting started
 
-Open the [Releases](releases/latest) page, download `JV Data Analysis Tool v1.1.html`, and double-click it — no Python, no cloning. The release asset is identical to what the build script produces from source.
+Open the [Releases](releases/latest) page, download `JV Data Analysis Tool v1.1.1.html`, and double-click it — no Python, no cloning. The release asset is identical to what the build script produces from source.
 
 1. Drag your instrument's CSV/TXT files onto the page (or click "Add file"). If you just want to look around first, the repo ships a sample at `v1.0/样例数据/Sample Data.csv` — real measurement data with condition names anonymized to Condition 1–5 plus a Base. If a "merge suggestion" dialog pops up (the sample uses series-style condition names), just choose "keep all"
 2. Tick the conditions to compare in the left panel; rename them or set one as Base
@@ -118,7 +118,7 @@ cd v1.0
 python build_single.py
 ```
 
-The output, `JV Data Analysis Tool v1.1.html`, has all CSS/JS/ECharts inlined — copy it anywhere and it works.
+The output, `JV Data Analysis Tool v1.1.1.html`, has all CSS/JS/ECharts inlined — copy it anywhere and it works.
 
 ## License
 

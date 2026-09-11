@@ -2,7 +2,7 @@
 """单文件打包脚本（实施规格书第 12 章）
 
 把 index.html + style.css + lib/echarts.min.js + js/*.js 内联为单个 HTML，
-产物离线可用（无任何外部引用），输出为「JV Data Analysis Tool v1.1.html」。
+产物离线可用（无任何外部引用），输出为「JV Data Analysis Tool v1.1.1.html」。
 用法：python build_single.py [--e2e]   （--e2e 时注入测试数据供 headless 验收，产物带调试 div）
 """
 import sys, re
@@ -77,7 +77,7 @@ window.addEventListener('DOMContentLoaded', function () {
         idx = html.rfind('</body>')
         html = html[:idx] + test_script + html[idx:]
 
-    out_name = 'tmp/e2e_built.html' if e2e else 'JV Data Analysis Tool v1.1.html'
+    out_name = 'tmp/e2e_built.html' if e2e else 'JV Data Analysis Tool v1.1.1.html'
     open(out_name, 'w', encoding='utf-8').write(html)
     print('已生成', out_name, '（', len(html), '字符 /', len(html.encode('utf-8')), '字节）')
 
