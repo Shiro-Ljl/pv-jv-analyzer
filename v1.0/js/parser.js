@@ -133,7 +133,19 @@
    *  返回 { key: string|null, sys: boolean }——sys = guided 模式系统名行（关专用容器语义）。 */
   function resolveConditionKey(rec, ctx) {
     // 宽表变体：条件名由解析期的「顺序切组」给定——位置语义无法用名称规则表达，故最高优先
-    if (rec && rec.condFixedName) return { key: rec.condFixedName, sys: false };
+    // R10：其上再叠加两级用户决策——位置级（拆分为独立块，plainGroupMap）> 条件名级（分组画板合并，nameManualMap）
+    if (rec && rec.condFixedName) {
+      var fixedKey = rec.condFixedName;
+      if (plainGroupMap && plainGroupMap[rec.pos] !== undefined && plainGroupMap[rec.pos] !== '') {
+        fixedKey = plainGroupMap[rec.pos];
+      }
+      var fmap = ctx && ctx.nameManualMapPlain; // R10-5：宽表分支只认「键全部属于本文件条件名集合」的映射（见 manualMapForPlain）
+      if (fmap) {
+        var fmv = fmap[fixedKey];
+        if (fmv !== undefined && fmv !== '') return { key: fmv, sys: false };
+      }
+      return { key: fixedKey, sys: false };
+    }
     var mode = ctx && ctx.mode;
     if (mode === 'user') return { key: userRuleKey(rec.name), sys: false };
     if (mode === 'guided') {
@@ -646,6 +658,39 @@
   var pairAdjacentNames = false;
   function setPairingOption(v) { pairAdjacentNames = !!v; }
   function getPairingOption() { return pairAdjacentNames; }
+  /* R10：宽表（无 [Information]）位置级分组决策——块位置(rec.pos) → 条件名（拆分/逐块重组用）。
+   *  位置语义只对「同一个文件的同一次切块」有效，故由调用方（main.js）在每次重算前按当前文件设置，
+   *  载入新文件时清空；本层不做跨文件推断。null=无决策（走顺序切组默认）。 */
+  var plainGroupMap = null;
+  function setPlainGroupMap(m) {
+    plainGroupMap = (m && typeof m === 'object' && Object.keys(m).length) ? m : null;
+  }
+  function getPlainGroupMap() { return plainGroupMap ? JSON.parse(JSON.stringify(plainGroupMap)) : null; }
+  /** R10-5：宽表分支的 nameManualMap 键空间守卫。
+   *  宽表分支按「条件名」查 map，普通分支按「记录名」查同一张（可持久化的）map；
+   *  普通文件留下的记录名键与本文件条件名撞名时，宽表条件会被静默改名/并组（HEAD 版宽表对 map 完全免疫）。
+   *  判据取「全键命中」：map 的全部键都落在本文件条件名集合（顺序切组名 ∪ 位置级决策目标名）内才认这张 map；
+   *  普通文件动辄上百个记录名键，不可能全命中 → 整张 map 被拒（宁可不用，不可误用）。 */
+  function manualMapForPlain(fileNameSet) {
+    if (!nameManualMap || !fileNameSet) return null;
+    var keys = Object.keys(nameManualMap);
+    for (var i = 0; i < keys.length; i++) { if (!fileNameSet[keys[i]]) return null; }
+    return nameManualMap;
+  }
+  /** R10-5：由记录集解析宽表可用的名称映射——条件名集合 = 顺序切组名（condFixedName）∪ 位置级决策目标名 */
+  function plainManualMapFor(records) {
+    var set = null;
+    for (var i = 0; i < records.length; i++) {
+      if (records[i].condFixedName === undefined) continue;
+      if (!set) set = {};
+      set[records[i].condFixedName] = true;
+    }
+    if (!set) return null; // 非宽表（无位置条件名）→ 本文件不适用键空间守卫
+    if (plainGroupMap) {
+      Object.keys(plainGroupMap).forEach(function (k) { if (plainGroupMap[k]) set[plainGroupMap[k]] = true; });
+    }
+    return manualMapForPlain(set);
+  }
   /** R3/B：E36a 序号配对——相邻同名（严格同名）且未判向的两条记录 → 前正后反（dir=1/-1——进入既有配对路径后 both/HI 可算）；返回配对数 */
   function applyAdjacentPairing(records) {
     var n = 0;
@@ -928,7 +973,9 @@
   }
 
   /** 顺序切组：同一时间戳的连续块 = 一个条件；条件名 = 组首块名（重名自动加 (2)/(3)…防并组）。
-   *  无时间戳行时每块独立成条件（保守——不猜分组）。返回 每块的条件名数组。 */
+   *  无时间戳行时每块独立成条件（保守——不猜分组）。
+   *  R10：返回 { group, labels }——group=每块的条件名；labels=每块的原始 Name 行标签
+   *  （拆分成独立块时用作新条件名；顺序切组会把组内各块统一成组名，原始标签在此保留）。 */
   function buildPlainGroupNames(grid, starts, nameRow, timeRow) {
     var names = [];
     for (var i = 0; i < starts.length; i++) {
@@ -951,7 +998,7 @@
       }
       if (!same) { flushGroup(groupStart, j - 1); groupStart = j; }
     }
-    return out;
+    return { group: out, labels: names };
   }
 
   /** 变体通道对象：与 [Information] 通道同构（isValid/jv/area/proto），供 JV 关联与统计复用 */
@@ -1128,9 +1175,13 @@
           rsh: map['Rsh (ohm)'] >= 0 ? toNumber(grid[r4][map['Rsh (ohm)']]) : NaN
         };
         // 变体：条件名由「顺序切组」给定（块级位置语义）——覆盖按名归并（同名通道跨条件不再并组）
+        // R10：同时保留本块的原始 Name 标签（plainBlockName）——拆分为独立条件时的命名来源
         if (segFixedNames) {
           var fxIdx = records.length - segRecStart;
-          if (fxIdx < segFixedNames.length) rec.condFixedName = segFixedNames[fxIdx];
+          if (fxIdx < segFixedNames.group.length) {
+            rec.condFixedName = segFixedNames.group[fxIdx];
+            rec.plainBlockName = segFixedNames.labels[fxIdx];
+          }
         }
         // P3：物理边界计数（仅告警不改数据）——Area≤0 / Eff<0 / |Voc|>3V / |Jsc|>1000mA/cm²
         if ((isNum(rec.area) && rec.area <= 0) || (isNum(rec.eff) && rec.eff < 0) ||
@@ -1245,10 +1296,12 @@
     // R3/B：E36a 序号配对选项（默认 off——零差异）——开启时：相邻同名（严格同名）且未判向的两条记录视为正反扫对（前正后反）
     if (pairAdjacentNames) applyAdjacentPairing(records);
 
+    // R10-5：宽表名称映射的键空间守卫（一次性解析；全键命中本文件条件名集合才认）
+    var ctxPlainMap = plainManualMapFor(records);
     for (var ri = 0; ri < records.length; ri++) {
       var rec = records[ri];
       // R1：唯一键判定（resolveConditionKey——从原内嵌 ck 链提取，行为等价）
-      var rk = resolveConditionKey(rec, { mode: clusterMode, nameManualMap: nameManualMap });
+      var rk = resolveConditionKey(rec, { mode: clusterMode, nameManualMap: nameManualMap, nameManualMapPlain: ctxPlainMap });
       var ck = rk.key;
       var isSysGuided = rk.sys;
       if (rec.name !== '' && (rec.dir === 0 || ck !== null || clusterMode === 'user' || (clusterMode === 'guided' && !isSysGuided) || rec.jvDirAssigned === true)) {
@@ -1350,6 +1403,37 @@
       }
     }
 
+    // R10：宽表变体后处理——① 条件附带「块清单」（位置+块名，供条件面板把容器拆成独立块条件）；
+    //   ② 器件来源标注（记录原条件名 ≠ 所属条件名 → srcCond，合并后详情表可见来源）
+    if (hasCondFixed) {
+      var posGroup = {}, posLabel = {};
+      for (var __pi = 0; __pi < records.length; __pi++) {
+        var __pr = records[__pi];
+        if (__pr.condFixedName === undefined) continue;
+        posGroup[__pr.pos] = __pr.condFixedName;
+        if (__pr.plainBlockName !== undefined && __pr.plainBlockName !== '') posLabel[__pr.pos] = __pr.plainBlockName;
+      }
+      conditions.forEach(function (c) {
+        var seenPos = {}, blocks = [], srcSet = {}, srcN = 0;
+        c.devices.forEach(function (d) {
+          var cand = [d.fwdPos, d.revPos];
+          for (var q = 0; q < cand.length; q++) {
+            var p = cand[q];
+            if (p < 0 || seenPos[p] || posGroup[p] === undefined) continue;
+            seenPos[p] = true;
+            blocks.push({ pos: p, name: posLabel[p] !== undefined ? posLabel[p] : posGroup[p] });
+            if (!d.srcCond && posGroup[p] !== c.name) d.srcCond = posGroup[p];
+            if (!srcSet[posGroup[p]]) { srcSet[posGroup[p]] = true; srcN++; }
+          }
+        });
+        blocks.sort(function (a, b) { return a.pos - b.pos; });
+        /* 合并产物判定：块来自 ≥2 个「原始条件」才算合并（拆出来的块条件是 1 个来源——它仍要保留块清单，
+         *  否则下次应用会退回原容器；同一原条件内重组块同理按块可拆）。 */
+        if (srcN >= 2) c.plainMerged = true;
+        else if (blocks.length) c.plainBlocks = blocks;
+      });
+    }
+
     // 有效器件数（含单方向）；单方向计数
     for (var ci2 = 0; ci2 < conditions.length; ci2++) {
       stats.validDeviceCount += conditions[ci2].devices.length;
@@ -1372,7 +1456,8 @@
       appliedTemplate: appliedTemplate, // v1.1-I2：模板命中信息透传（{source:'user'|'tpl', id, signature} 或 null）
       // v1.1-I3：解析预览（原名/模板/主键/通道/方向；>40 记录才附）——变体（位置切组）不适用名称预览，
       // 置 null 走「事实源=当前 conditions」重建（分组面板即解析后的正确分组）
-      namePreview: hasCondFixed ? null : buildNamePreview(records)
+      namePreview: hasCondFixed ? null : buildNamePreview(records),
+      plainFixed: hasCondFixed // R10：宽表变体标记（顺序切组数据——分组面板走条件级/位置级决策）
     };
   }
 
@@ -1578,7 +1663,7 @@
       var t = inferNameTemplate(records.map(function (r) { return r.name; }));
       if (t) { mode = t.id; applied = { source: 'tpl', id: t.id, signature: t.signature }; }
     }
-    return { mode: mode, applied: applied, nameManualMap: mM };
+    return { mode: mode, applied: applied, nameManualMap: mM, nameManualMapPlain: plainManualMapFor(records) };
   }
 
   /** R1：组模型构建（归属层）——records 提取 + resolveConditionKey 全量 + 组聚合/系统名跟随视图
@@ -1597,7 +1682,7 @@
     var keyOrder = [];
     var lastNamed = null;
     pr.records.forEach(function (rec, ri) {
-      var rk = resolveConditionKey(rec, { mode: rm.mode, nameManualMap: rm.nameManualMap, guidedRule: rm.guidedRule });
+      var rk = resolveConditionKey(rec, { mode: rm.mode, nameManualMap: rm.nameManualMap, nameManualMapPlain: rm.nameManualMapPlain, guidedRule: rm.guidedRule });
       var gKey = rk.key;
       // 复刻组装器的「进条件分支」键判定（L1027-1032）：ck 为 null 时，dir=0（新命名）→ 全文小写键；其余回退容器
       if (gKey === null && rec.name !== '' && (rec.dir === 0 || rm.mode === 'user' || (rm.mode === 'guided' && !rk.sys) || rec.jvDirAssigned === true)) {
@@ -1686,6 +1771,9 @@
     applyGroupDecisions: applyGroupDecisions,
     mergeConditions: mergeConditions,
     splitConditions: splitConditions,
+    // R10：宽表位置级分组决策（拆分/逐块重组）
+    setPlainGroupMap: setPlainGroupMap,
+    getPlainGroupMap: getPlainGroupMap,
     // R1：分组决策模型
     resolveConditionKey: resolveConditionKey,
     resolveMode: resolveMode,

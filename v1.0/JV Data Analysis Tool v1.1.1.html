@@ -909,13 +909,11 @@ td.missing { font-style: italic; color: var(--text-2); }
 .group-btn-active { background: var(--primary); border-color: var(--primary); color: #fff; }
 .group-remember { display: flex; align-items: center; gap: 6px; font-size: 13px; margin: 0 0 12px; cursor: pointer; }
 
-/* ============ 第三十七批方案B：条件整理（合并/拆分）+ 来源标注 ============ */
-.cond-merge-bar { display: flex; align-items: center; gap: 6px; padding: 8px 10px 2px; }
+/* ============ 第三十七批方案B：条件整理（拆分）+ 来源标注 ============
+ * t116：左栏「☰ 整理」合并工具条与其选中高亮（.cond-merge-bar / .cond-merging-row / .cond-selected）已删除
+ *   ——合并入口统一到条件分组面板；左栏仅保留 ⤢ 拆分按钮 */
 .cond-split-btn { border: none; background: none; color: var(--text-2); font-size: 13px; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
 .cond-split-btn:hover { color: var(--primary); background: var(--row-alt); }
-.cond-merging-row { cursor: pointer; }
-.cond-selected { background: rgba(37, 99, 235, 0.08); box-shadow: inset 3px 0 0 var(--primary); }
-.cond-selected .cond-name-input { background: transparent; }
 .dev-src { font-size: 10px; color: #94a3b8; margin-left: 5px; font-weight: normal; white-space: nowrap; }
 
 /* ============ 第三十七批（第三）：坐标轴手动输入控件 ============ */
@@ -1218,6 +1216,9 @@ td.missing { font-style: italic; color: var(--text-2); }
 .nb-gname { font-size: 12px; padding: 3px 8px; width: 220px; border: 1px solid var(--line); border-radius: 6px; font-family: inherit; }
 .nb-selinfo { color: var(--text-2); }
 .nb-hint { font-size: 12px; color: var(--text-2); margin: 2px 0 6px; }
+/* t116：待应用提示（②）——仅 nbDirty() 为真时显示 */
+.nb-pending { font-size: 12px; color: var(--text-2); }
+.nb-pending[hidden] { display: none; }
 
 /* v1.1：名称解释器面板顶部使用说明 */
 .np-help { font-size: 12px; line-height: 1.6; color: #666; background: #f7f8fa; border: 1px solid #e4e7ed; border-radius: 6px; padding: 8px 12px; margin-bottom: 10px; white-space: pre-line; }
@@ -1227,6 +1228,8 @@ td.missing { font-style: italic; color: var(--text-2); }
 #name-preview-modal .nb-grid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 10px; } /* t69：密度切换已删（仅常规 155px 单档）；t71：高度由滚动区布局决定（去 70vh 固定值） */
 #name-preview-modal .nb-card { font-size: 13px; padding: 8px 10px; }
 #name-preview-modal .nb-card .nb-cname2 { display: block; font-size: 12px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* t116：卡片「依据」小字（③）——与 .nb-cname2 同字号同色、单行省略；只替换第二行，不新增行高 */
+.nb-why { display: block; font-size: 12px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #name-preview-modal .nb-actions { background: var(--card); padding: 10px 0 2px; border-top: 1px solid var(--line); flex: 0 0 auto; } /* t61①：去 sticky；t71：固定条（滚动区外，恒可见） */
 #name-preview-modal .nb-actions .nb-btn-primary { font-weight: 600; }
 
@@ -1290,12 +1293,7 @@ td.missing { font-style: italic; color: var(--text-2); }
       </div>
       <div id="cond-first-hint" class="cond-first-hint" data-i18n="cond.baseMark"></div>
       <div id="cond-list" class="cond-list"></div>
-      <!-- 第三十七批方案B：条件整理工具条（合并/拆分） -->
-      <div class="cond-merge-bar">
-        <button id="cond-merge-mode" class="btn btn-sm" type="button" title="勾选多个条件合并为一个统计；已合并条件可拆分" data-i18n="cond.merge" data-i18n-title="cond.mergeModeTitle">☰ 整理</button>
-        <button id="cond-merge-btn" class="btn btn-sm btn-primary" type="button" hidden data-i18n="cond.mergeSelected">合并所选（0）</button>
-        <button id="cond-merge-exit" class="btn btn-sm" type="button" hidden data-i18n="cond.mergeExit">退出</button>
-      </div>
+      <!-- t116：左栏「☰ 整理」合并工具条已删除——条件合并统一由分组面板承担 -->
     </aside>
 
     <!-- 页面导航卡片（同列下方，下滑时 sticky 吸附在工具栏下） -->
@@ -1372,22 +1370,6 @@ td.missing { font-style: italic; color: var(--text-2); }
         <button id="group-btn-split-all" class="btn" type="button" data-i18n="modal.keepAll"></button>
         <button id="group-btn-merge-all" class="btn" type="button" data-i18n="modal.mergeAll"></button>
         <button id="group-btn-apply" class="btn btn-primary" type="button" data-i18n="modal.apply"></button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 第三十七批方案B：手动合并命名弹窗 -->
-  <div id="cond-merge-modal" class="modal-mask" hidden>
-    <div class="modal-box">
-      <div class="modal-title" data-i18n="modal.mergeTitle"></div>
-      <div id="cond-merge-msg" class="modal-msg"></div>
-      <label class="modal-field">
-        <span data-i18n="modal.mergeName"></span>
-        <input id="cond-merge-name" type="text" placeholder="PVK">
-      </label>
-      <div class="modal-actions">
-        <button id="cond-merge-cancel" class="btn" type="button" data-i18n="common.cancel"></button>
-        <button id="cond-merge-ok" class="btn btn-primary" type="button" data-i18n="modal.merge"></button>
       </div>
     </div>
   </div>
@@ -1557,6 +1539,7 @@ td.missing { font-style: italic; color: var(--text-2); }
       <div class="modal-msg" data-i18n="namePreview.desc"></div>
       <div id="name-preview-body" class="name-preview-body"></div>
       <div class="modal-actions">
+        <button id="name-preview-undo-apply" class="btn" type="button" disabled></button>
         <button id="name-preview-keep" class="btn" type="button" data-i18n="namePreview.keep"></button>
         <button id="name-preview-apply" class="btn btn-primary" type="button" data-i18n="namePreview.apply"></button>
         <button id="name-preview-clear" class="btn" type="button" data-i18n="namePreview.clear"></button>
@@ -1702,9 +1685,6 @@ td.missing { font-style: italic; color: var(--text-2); }
 
     /* ===== 条件面板 ===== */
     'cond.label': { zh: '条件', en: 'Condition' },
-    'cond.merge': { zh: '☰ 整理', en: '☰ Group' },
-    'cond.mergeSelected': { zh: '合并所选（0）', en: 'Merge selected (0)' },
-    'cond.mergeExit': { zh: '退出', en: 'Exit' },
     'cond.baseMark': { zh: '未设首个条件', en: 'No base condition set' },
 
     /* ===== 视图标签 ===== */
@@ -1736,9 +1716,6 @@ td.missing { font-style: italic; color: var(--text-2); }
     'modal.keepAll': { zh: '全部保持', en: 'Keep All' },
     'modal.mergeAll': { zh: '全部合并', en: 'Merge All' },
     'modal.apply': { zh: '应用', en: 'Apply' },
-    'modal.mergeTitle': { zh: '合并条件', en: 'Merge Conditions' },
-    'modal.mergeName': { zh: '合并后的条件名', en: 'Merged condition name' },
-    'modal.merge': { zh: '合并', en: 'Merge' },
 
     /* ===== PDF / 导出弹窗 ===== */
     'export.pdfTitle': { zh: '导出 PDF', en: 'Export PDF' },
@@ -1863,9 +1840,7 @@ td.missing { font-style: italic; color: var(--text-2); }
     'st.titleGapY': { zh: 'Y 标题间距', en: 'Y title gap' },
     'st.titleGapX': { zh: 'X 标题间距', en: 'X title gap' },
     /* 条件面板/杂项 */
-    'cond.mergeSelected2': { zh: '合并所选', en: 'Merge selected' },
     'cond.exit': { zh: '退出', en: 'Exit' },
-    'cond.mergeModeTitle': { zh: '勾选多个条件合并为一个统计；已合并条件可拆分', en: 'Select conditions to merge into one statistic; merged conditions can be split' }
   };
 
   /* ---------------- 运行时整句翻译表（showToast 等动态文案） ---------------- */
@@ -2169,7 +2144,19 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
    *  返回 { key: string|null, sys: boolean }——sys = guided 模式系统名行（关专用容器语义）。 */
   function resolveConditionKey(rec, ctx) {
     // 宽表变体：条件名由解析期的「顺序切组」给定——位置语义无法用名称规则表达，故最高优先
-    if (rec && rec.condFixedName) return { key: rec.condFixedName, sys: false };
+    // R10：其上再叠加两级用户决策——位置级（拆分为独立块，plainGroupMap）> 条件名级（分组画板合并，nameManualMap）
+    if (rec && rec.condFixedName) {
+      var fixedKey = rec.condFixedName;
+      if (plainGroupMap && plainGroupMap[rec.pos] !== undefined && plainGroupMap[rec.pos] !== '') {
+        fixedKey = plainGroupMap[rec.pos];
+      }
+      var fmap = ctx && ctx.nameManualMapPlain; // R10-5：宽表分支只认「键全部属于本文件条件名集合」的映射（见 manualMapForPlain）
+      if (fmap) {
+        var fmv = fmap[fixedKey];
+        if (fmv !== undefined && fmv !== '') return { key: fmv, sys: false };
+      }
+      return { key: fixedKey, sys: false };
+    }
     var mode = ctx && ctx.mode;
     if (mode === 'user') return { key: userRuleKey(rec.name), sys: false };
     if (mode === 'guided') {
@@ -2682,6 +2669,39 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
   var pairAdjacentNames = false;
   function setPairingOption(v) { pairAdjacentNames = !!v; }
   function getPairingOption() { return pairAdjacentNames; }
+  /* R10：宽表（无 [Information]）位置级分组决策——块位置(rec.pos) → 条件名（拆分/逐块重组用）。
+   *  位置语义只对「同一个文件的同一次切块」有效，故由调用方（main.js）在每次重算前按当前文件设置，
+   *  载入新文件时清空；本层不做跨文件推断。null=无决策（走顺序切组默认）。 */
+  var plainGroupMap = null;
+  function setPlainGroupMap(m) {
+    plainGroupMap = (m && typeof m === 'object' && Object.keys(m).length) ? m : null;
+  }
+  function getPlainGroupMap() { return plainGroupMap ? JSON.parse(JSON.stringify(plainGroupMap)) : null; }
+  /** R10-5：宽表分支的 nameManualMap 键空间守卫。
+   *  宽表分支按「条件名」查 map，普通分支按「记录名」查同一张（可持久化的）map；
+   *  普通文件留下的记录名键与本文件条件名撞名时，宽表条件会被静默改名/并组（HEAD 版宽表对 map 完全免疫）。
+   *  判据取「全键命中」：map 的全部键都落在本文件条件名集合（顺序切组名 ∪ 位置级决策目标名）内才认这张 map；
+   *  普通文件动辄上百个记录名键，不可能全命中 → 整张 map 被拒（宁可不用，不可误用）。 */
+  function manualMapForPlain(fileNameSet) {
+    if (!nameManualMap || !fileNameSet) return null;
+    var keys = Object.keys(nameManualMap);
+    for (var i = 0; i < keys.length; i++) { if (!fileNameSet[keys[i]]) return null; }
+    return nameManualMap;
+  }
+  /** R10-5：由记录集解析宽表可用的名称映射——条件名集合 = 顺序切组名（condFixedName）∪ 位置级决策目标名 */
+  function plainManualMapFor(records) {
+    var set = null;
+    for (var i = 0; i < records.length; i++) {
+      if (records[i].condFixedName === undefined) continue;
+      if (!set) set = {};
+      set[records[i].condFixedName] = true;
+    }
+    if (!set) return null; // 非宽表（无位置条件名）→ 本文件不适用键空间守卫
+    if (plainGroupMap) {
+      Object.keys(plainGroupMap).forEach(function (k) { if (plainGroupMap[k]) set[plainGroupMap[k]] = true; });
+    }
+    return manualMapForPlain(set);
+  }
   /** R3/B：E36a 序号配对——相邻同名（严格同名）且未判向的两条记录 → 前正后反（dir=1/-1——进入既有配对路径后 both/HI 可算）；返回配对数 */
   function applyAdjacentPairing(records) {
     var n = 0;
@@ -2964,7 +2984,9 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
   }
 
   /** 顺序切组：同一时间戳的连续块 = 一个条件；条件名 = 组首块名（重名自动加 (2)/(3)…防并组）。
-   *  无时间戳行时每块独立成条件（保守——不猜分组）。返回 每块的条件名数组。 */
+   *  无时间戳行时每块独立成条件（保守——不猜分组）。
+   *  R10：返回 { group, labels }——group=每块的条件名；labels=每块的原始 Name 行标签
+   *  （拆分成独立块时用作新条件名；顺序切组会把组内各块统一成组名，原始标签在此保留）。 */
   function buildPlainGroupNames(grid, starts, nameRow, timeRow) {
     var names = [];
     for (var i = 0; i < starts.length; i++) {
@@ -2987,7 +3009,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       }
       if (!same) { flushGroup(groupStart, j - 1); groupStart = j; }
     }
-    return out;
+    return { group: out, labels: names };
   }
 
   /** 变体通道对象：与 [Information] 通道同构（isValid/jv/area/proto），供 JV 关联与统计复用 */
@@ -3164,9 +3186,13 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           rsh: map['Rsh (ohm)'] >= 0 ? toNumber(grid[r4][map['Rsh (ohm)']]) : NaN
         };
         // 变体：条件名由「顺序切组」给定（块级位置语义）——覆盖按名归并（同名通道跨条件不再并组）
+        // R10：同时保留本块的原始 Name 标签（plainBlockName）——拆分为独立条件时的命名来源
         if (segFixedNames) {
           var fxIdx = records.length - segRecStart;
-          if (fxIdx < segFixedNames.length) rec.condFixedName = segFixedNames[fxIdx];
+          if (fxIdx < segFixedNames.group.length) {
+            rec.condFixedName = segFixedNames.group[fxIdx];
+            rec.plainBlockName = segFixedNames.labels[fxIdx];
+          }
         }
         // P3：物理边界计数（仅告警不改数据）——Area≤0 / Eff<0 / |Voc|>3V / |Jsc|>1000mA/cm²
         if ((isNum(rec.area) && rec.area <= 0) || (isNum(rec.eff) && rec.eff < 0) ||
@@ -3281,10 +3307,12 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     // R3/B：E36a 序号配对选项（默认 off——零差异）——开启时：相邻同名（严格同名）且未判向的两条记录视为正反扫对（前正后反）
     if (pairAdjacentNames) applyAdjacentPairing(records);
 
+    // R10-5：宽表名称映射的键空间守卫（一次性解析；全键命中本文件条件名集合才认）
+    var ctxPlainMap = plainManualMapFor(records);
     for (var ri = 0; ri < records.length; ri++) {
       var rec = records[ri];
       // R1：唯一键判定（resolveConditionKey——从原内嵌 ck 链提取，行为等价）
-      var rk = resolveConditionKey(rec, { mode: clusterMode, nameManualMap: nameManualMap });
+      var rk = resolveConditionKey(rec, { mode: clusterMode, nameManualMap: nameManualMap, nameManualMapPlain: ctxPlainMap });
       var ck = rk.key;
       var isSysGuided = rk.sys;
       if (rec.name !== '' && (rec.dir === 0 || ck !== null || clusterMode === 'user' || (clusterMode === 'guided' && !isSysGuided) || rec.jvDirAssigned === true)) {
@@ -3386,6 +3414,37 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       }
     }
 
+    // R10：宽表变体后处理——① 条件附带「块清单」（位置+块名，供条件面板把容器拆成独立块条件）；
+    //   ② 器件来源标注（记录原条件名 ≠ 所属条件名 → srcCond，合并后详情表可见来源）
+    if (hasCondFixed) {
+      var posGroup = {}, posLabel = {};
+      for (var __pi = 0; __pi < records.length; __pi++) {
+        var __pr = records[__pi];
+        if (__pr.condFixedName === undefined) continue;
+        posGroup[__pr.pos] = __pr.condFixedName;
+        if (__pr.plainBlockName !== undefined && __pr.plainBlockName !== '') posLabel[__pr.pos] = __pr.plainBlockName;
+      }
+      conditions.forEach(function (c) {
+        var seenPos = {}, blocks = [], srcSet = {}, srcN = 0;
+        c.devices.forEach(function (d) {
+          var cand = [d.fwdPos, d.revPos];
+          for (var q = 0; q < cand.length; q++) {
+            var p = cand[q];
+            if (p < 0 || seenPos[p] || posGroup[p] === undefined) continue;
+            seenPos[p] = true;
+            blocks.push({ pos: p, name: posLabel[p] !== undefined ? posLabel[p] : posGroup[p] });
+            if (!d.srcCond && posGroup[p] !== c.name) d.srcCond = posGroup[p];
+            if (!srcSet[posGroup[p]]) { srcSet[posGroup[p]] = true; srcN++; }
+          }
+        });
+        blocks.sort(function (a, b) { return a.pos - b.pos; });
+        /* 合并产物判定：块来自 ≥2 个「原始条件」才算合并（拆出来的块条件是 1 个来源——它仍要保留块清单，
+         *  否则下次应用会退回原容器；同一原条件内重组块同理按块可拆）。 */
+        if (srcN >= 2) c.plainMerged = true;
+        else if (blocks.length) c.plainBlocks = blocks;
+      });
+    }
+
     // 有效器件数（含单方向）；单方向计数
     for (var ci2 = 0; ci2 < conditions.length; ci2++) {
       stats.validDeviceCount += conditions[ci2].devices.length;
@@ -3408,7 +3467,8 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       appliedTemplate: appliedTemplate, // v1.1-I2：模板命中信息透传（{source:'user'|'tpl', id, signature} 或 null）
       // v1.1-I3：解析预览（原名/模板/主键/通道/方向；>40 记录才附）——变体（位置切组）不适用名称预览，
       // 置 null 走「事实源=当前 conditions」重建（分组面板即解析后的正确分组）
-      namePreview: hasCondFixed ? null : buildNamePreview(records)
+      namePreview: hasCondFixed ? null : buildNamePreview(records),
+      plainFixed: hasCondFixed // R10：宽表变体标记（顺序切组数据——分组面板走条件级/位置级决策）
     };
   }
 
@@ -3614,7 +3674,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       var t = inferNameTemplate(records.map(function (r) { return r.name; }));
       if (t) { mode = t.id; applied = { source: 'tpl', id: t.id, signature: t.signature }; }
     }
-    return { mode: mode, applied: applied, nameManualMap: mM };
+    return { mode: mode, applied: applied, nameManualMap: mM, nameManualMapPlain: plainManualMapFor(records) };
   }
 
   /** R1：组模型构建（归属层）——records 提取 + resolveConditionKey 全量 + 组聚合/系统名跟随视图
@@ -3633,7 +3693,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     var keyOrder = [];
     var lastNamed = null;
     pr.records.forEach(function (rec, ri) {
-      var rk = resolveConditionKey(rec, { mode: rm.mode, nameManualMap: rm.nameManualMap, guidedRule: rm.guidedRule });
+      var rk = resolveConditionKey(rec, { mode: rm.mode, nameManualMap: rm.nameManualMap, nameManualMapPlain: rm.nameManualMapPlain, guidedRule: rm.guidedRule });
       var gKey = rk.key;
       // 复刻组装器的「进条件分支」键判定（L1027-1032）：ck 为 null 时，dir=0（新命名）→ 全文小写键；其余回退容器
       if (gKey === null && rec.name !== '' && (rec.dir === 0 || rm.mode === 'user' || (rm.mode === 'guided' && !rk.sys) || rec.jvDirAssigned === true)) {
@@ -3722,6 +3782,9 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     applyGroupDecisions: applyGroupDecisions,
     mergeConditions: mergeConditions,
     splitConditions: splitConditions,
+    // R10：宽表位置级分组决策（拆分/逐块重组）
+    setPlainGroupMap: setPlainGroupMap,
+    getPlainGroupMap: getPlainGroupMap,
     // R1：分组决策模型
     resolveConditionKey: resolveConditionKey,
     resolveMode: resolveMode,
@@ -6102,14 +6165,20 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       row.appendChild(btn);
 
       // 第三十七批方案B：合并过的条件行内显示拆分按钮（把 merged 条件还原为原始成员）
-      if (cond.merged && callbacks.onSplit) {
+      // R10：宽表顺序切组/合并出的容器条件同样可拆（拆成独立块条件——按块位置，可整体恢复）
+      var plainBlocks = (cond.plainBlocks && cond.plainBlocks.length > 1 && !cond.plainMerged) ? cond.plainBlocks : null;
+      if ((cond.merged || plainBlocks) && callbacks.onSplit) {
         var splitBtn = document.createElement('button');
         splitBtn.type = 'button';
         splitBtn.className = 'cond-split-btn';
         splitBtn.textContent = '⤢';
-        splitBtn.title = (typeof I18N !== 'undefined' && I18N.getLang() === 'en')
-          ? ('Split: restore "' + cond.name + '" into ' + ((cond.mergedFrom || []).join(', ') || 'its members'))
-          : ('拆分：把「' + cond.name + '」还原为 ' + ((cond.mergedFrom || []).join('、') || '成员条件'));
+        splitBtn.title = plainBlocks
+          ? ((typeof I18N !== 'undefined' && I18N.getLang() === 'en')
+            ? ('Split: separate "' + cond.name + '" into ' + plainBlocks.length + ' independent conditions by block')
+            : ('拆分：把「' + cond.name + '」按块拆成 ' + plainBlocks.length + ' 个独立条件'))
+          : ((typeof I18N !== 'undefined' && I18N.getLang() === 'en')
+            ? ('Split: restore "' + cond.name + '" into ' + ((cond.mergedFrom || []).join(', ') || 'its members'))
+            : ('拆分：把「' + cond.name + '」还原为 ' + ((cond.mergedFrom || []).join('、') || '成员条件')));
         splitBtn.addEventListener('click', function (e) {
           e.stopPropagation();
           if (callbacks.onSplit) callbacks.onSplit(cond.name);
@@ -6117,16 +6186,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         row.appendChild(splitBtn);
       }
 
-      // 整理模式：整行点击切换合并选中（不干扰 input/checkbox/button 原生交互）
-      if (callbacks.merging) {
-        row.classList.add('cond-merging-row');
-        if (callbacks.selected && callbacks.selected(cond.name)) row.classList.add('cond-selected');
-        row.addEventListener('click', function (e) {
-          if (e.target.closest('input, button, .cond-drag-handle')) return;
-          if (callbacks.onToggleSelect) callbacks.onToggleSelect(cond.name);
-        });
-      }
-
+      // t116：整理模式整行点选（merging/selected/onToggleSelect）已删除——左栏不再承担合并入口
       list.appendChild(row);
     });
 
@@ -7290,8 +7350,9 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     jvOverlay: { direction: 'rev', selNames: null }, // P5：叠加图方向 + 二次筛选（null=全部已勾选）
     detailSel: {}, // P5：详情 JV 图选中器件（条件名 → devIdx）
     chartInstances: [],   // 当前页所有 ECharts 实例（统一 resize/销毁）
-    condMergeMode: false, // 第三十七批方案B：条件整理模式（合并选择）
-    condMergeSelected: [] // 整理模式下被选中的条件名
+    // t116：会话级「应用」撤销栈——每次分组面板「应用」前压入一份分组态快照（上限 20），供逐步回退；
+    //   载入新文件（addFile）与「恢复原始分组」时清空
+    groupUndoStack: []
   };
 
   function $(id) { return document.getElementById(id); }
@@ -7382,7 +7443,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     }
     var btnLangZh = $('btn-lang-zh'), btnLangEn = $('btn-lang-en');
     if (btnLangZh) btnLangZh.addEventListener('click', function () {
-      if (typeof I18N !== 'undefined') I18N.setLang('zh'); // N4：i18n:changed 监听器统一 renderAll+refreshMergeBtn+syncLangSwitch（单入口防双重渲染）
+      if (typeof I18N !== 'undefined') I18N.setLang('zh'); // N4：i18n:changed 监听器统一 renderAll+syncLangSwitch（单入口防双重渲染）
     });
     if (btnLangEn) btnLangEn.addEventListener('click', function () {
       if (typeof I18N !== 'undefined') I18N.setLang('en'); // N4：同上
@@ -7390,7 +7451,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     syncLangSwitch();
     // i18n:changed 广播（脚本触发 setLang 时也重绘动态区 + 同步分段激活）
     if (typeof window.addEventListener === 'function') {
-      window.addEventListener('i18n:changed', function () { renderAll(); refreshMergeBtn(); syncLangSwitch(); var mm = $('merge-modal'); if (mm && !mm.hidden) paintMergeMsg(); var gm = $('group-modal'); if (gm && !gm.hidden && pendingGroupData) showGroupModal(pendingGroupData, pendingGroupCands); var gm2 = $('name-guide-modal'); if (gm2 && !gm2.hidden && guideData && typeof renderGuide === 'function') renderGuide(); var pe = $('name-preview-modal'); if (pe && !pe.hidden && previewData && typeof renderBlockEditor === 'function') renderBlockEditor(); }); // N3：切语言后整理模式按钮计数归零——补刷新合并按钮；i18n: 导入弹窗正文随语言重绘；i-7：group 弹窗行内按钮随语言重绘；v1.2-I3：name-guide 向导随语言重绘；t32：块编辑器随语言重绘（消除英文态中文残留）
+      window.addEventListener('i18n:changed', function () { renderAll(); refreshGroupUndoBtn(); syncLangSwitch(); var mm = $('merge-modal'); if (mm && !mm.hidden) paintMergeMsg(); var gm = $('group-modal'); if (gm && !gm.hidden && pendingGroupData) showGroupModal(pendingGroupData, pendingGroupCands); var gm2 = $('name-guide-modal'); if (gm2 && !gm2.hidden && guideData && typeof renderGuide === 'function') renderGuide(); var pe = $('name-preview-modal'); if (pe && !pe.hidden && previewData && typeof renderBlockEditor === 'function') renderBlockEditor(); }); // i18n: 导入弹窗正文随语言重绘；i-7：group 弹窗行内按钮随语言重绘；v1.2-I3：name-guide 向导随语言重绘；t32：块编辑器随语言重绘（消除英文态中文残留）；t116：撤销应用按钮文案随语言刷新
     }
 
     // 整页拖放（7.1：dragover/drop + 全页遮罩）
@@ -7707,13 +7768,34 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       } else if (state.groupApplied && data.conditions && data.conditions.length) {
         // t87：重建行附带 devN（条件器件数——卡 ×N 显示成员+跟随器总器件）与 srcNames（来源成员名——合并明细展开）
         var snap = state.groupRulesSnapshot && state.groupRulesSnapshot.manual;
-        pv = data.conditions.map(function (c) {
-          var src = null;
-          if (snap) {
-            var keys = Object.keys(snap).filter(function (k) { return snap[k] === c.name; });
-            if (keys.length) src = keys;
+        pv = [];
+        data.conditions.forEach(function (c) {
+          var row = { name: c.name, tplId: null, key: c.name, ch: '', dir: '', devN: c.devices.length, srcNames: null, memRowIdxs: [] };
+          if (data.plainFixed) {
+            // R10：合并来源（器件记录级 srcCond）只对「真合并产物」展示与还原（plainMerged=块跨 ≥2 个原始条件）；
+            //   拆出来的块条件是单块单源 → 不建成员行（否则会多出无意义的拆分按钮）
+            var bySrc = {}, order = [];
+            if (c.plainMerged) {
+              c.devices.forEach(function (d) {
+                if (!d.srcCond) return;
+                if (!bySrc[d.srcCond]) { bySrc[d.srcCond] = 0; order.push(d.srcCond); }
+                bySrc[d.srcCond]++;
+              });
+              if (order.length) row.srcNames = order.slice();
+            }
+            pv.push(row);
+            order.forEach(function (src) {
+              row.memRowIdxs.push(pv.length);
+              pv.push({ name: src, tplId: null, key: src, ch: '', dir: '', devN: bySrc[src], srcNames: null, memberOf: c.name });
+            });
+            return;
           }
-          return { name: c.name, tplId: null, key: c.name, ch: '', dir: '', devN: c.devices.length, srcNames: src };
+          if (snap) {
+            // R10 修复：身份条目（名→同名）不是合并来源——否则未参与合并的条件也会显示「⛓ 拆分」（用户实测反馈）
+            var keys = Object.keys(snap).filter(function (k) { return snap[k] === c.name && k !== c.name; });
+            if (keys.length) row.srcNames = keys;
+          }
+          pv.push(row);
         });
       } else if ((!pv || !pv.length) && data.conditions && data.conditions.length) {
         // t95：无 namePreview 的事实源（导入合并绘制数据 mergeData 产物等）→ 依当前条件重建（分组面板=合并后条件集，非原始全部）
@@ -7732,6 +7814,13 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
             });
           }
         });
+      }
+      // R10：宽表条件行附带「块清单」（画板卡内可直接按块拆分，不必再跑左栏；成员行跳过）
+      //  注：行上的 row.blocks 是名字积木（P.splitNameBlocks），与这里的位置块清单是两件事，故用 plainBlocks
+      if (data.plainFixed && data.conditions && data.conditions.length) {
+        var pbByName = {};
+        data.conditions.forEach(function (c) { if (c.plainBlocks) pbByName[c.name] = c.plainBlocks; });
+        pv.forEach(function (row) { if (!row.memberOf && pbByName[row.name]) row.plainBlocks = pbByName[row.name]; });
       }
       var mix = P.detectNameTemplateMix(pv.map(function (p) { return p.name; }));
       previewData = { rows: pv.slice(), mix: mix, srcData: data }; // t61④：源数据引用（应用后立即重算）
@@ -7819,13 +7908,514 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       if (b.onlyUn && card.grouped) return false;
       return true;
     }
+    /** R10：卡片若对应「宽表容器条件」（顺序切组出、多于 1 块、非合并产物）→ 返回其块清单，否则 null */
+    function nbCardContainerBlocks(card) {
+      if (!card || !card.grouped) return null;
+      for (var i = 0; i < card.ri.length; i++) {
+        var row = previewData.rows[card.ri[i]];
+        if (row && row.plainBlocks && row.plainBlocks.length > 1) return row.plainBlocks;
+      }
+      return null;
+    }
+    /* ---------- t117：合并链（逐步拆分）——「每一步合并后的成员集合」（叶子名，累积去重保序） ---------- */
+    /** t117：深拷贝（链/步骤；ES5 无 structuredClone——JSON 往返，与 plainMap 同款） */
+    function nbStepsCopy(x) { return x ? JSON.parse(JSON.stringify(x)) : null; }
+    /* R10-1 修：链步对象化——每步 = { name: 本步组名, members: 成员叶名（累积保序） }。
+     *   旧格式（纯数组）没有组名：历史存档（__SAVED__/旧产物）读入时归一化为 { name: null }，
+     *   末步可在读到条件名时回填（链键即条件名 = 该步组名）。
+     *   为什么必须存组名：「名主退出」（组名 = 被退出成员名）时，退出后余卡/余下条件要改回上一步组名——
+     *   不存组名就只能保持原名，两张同名卡/同名条件在装配层「同名 = 同条件」原地并回 = 静默 no-op。 */
+    function nbStepOf(st) {
+      if (!st) return null;
+      if (Object.prototype.toString.call(st) === '[object Array]') return { name: null, members: st.slice() };
+      return {
+        name: (typeof st.name === 'string' && st.name) ? st.name : null,
+        members: (st.members && st.members.length) ? st.members.slice() : []
+      };
+    }
+    /** R10-1：链归一化（数组 → 步对象；对象原样浅拷）——所有读链入口统一走这里 */
+    function nbStepsNorm(ch) {
+      var out = [];
+      (ch || []).forEach(function (st) { var o = nbStepOf(st); if (o) out.push(o); });
+      return out;
+    }
+    /** R10-1：取某一步的成员叶名（兼容旧数组格式） */
+    function nbStepMembers(st) { var o = nbStepOf(st); return o ? o.members : []; }
+    /** t117：卡的叶子名数组（保序去重）——有 mergeSteps → 用最后一步；
+     *  否则遍历 card.ri：行有 memRowIdxs（已合并条件的成员行）→ 先自身行名，再各成员行名；普通行 → 行名。
+     *  （宽表里 rows[ri].name 就是条件名；标准格式里是记录名——两种都能用） */
+    function nbCardLeaves(card) {
+      if (!card) return [];
+      if (card.mergeSteps && card.mergeSteps.length) return nbStepMembers(card.mergeSteps[card.mergeSteps.length - 1]);
+      /* R10-1 修：已应用（数据级）卡——先按卡名查当前数据条件的「叶子名集合」。
+       *   标准格式的器件记录是系统名（不打 srcCond），成员集合只能由名称级决策反查；
+       *   不取这个口径，跨应用累积的链在第二轮回退成「只剩最后一次合并」的 1 步链（随后被校验判死）。 */
+      var mem = nbCondLeafNames(card.key || card.repName || nbDefaultName(card));
+      if (mem && mem.length) return mem;
+      var out = [], seen = {};
+      function push(nm) {
+        if (!nm || seen[nm]) return;
+        seen[nm] = true; out.push(nm);
+      }
+      (card.ri || []).forEach(function (ri) {
+        var row = previewData.rows[ri];
+        if (!row) return;
+        if (row.memRowIdxs && row.memRowIdxs.length) {
+          push(row.name);
+          row.memRowIdxs.forEach(function (mi) {
+            var mr = previewData.rows[mi];
+            if (mr) push(mr.name);
+          });
+        } else push(row.name);
+      });
+      return out;
+    }
+    /** t117：链的最后一步相比前一步多出的名字（= 这一次合并并进来的条件；保序去重） */
+    function nbChainDetach(last, prev) {
+      var out = [];
+      (last || []).forEach(function (nm) { if ((prev || []).indexOf(nm) < 0 && out.indexOf(nm) < 0) out.push(nm); });
+      return out;
+    }
+    /** t117：条件当前实际成员集合（自身名 + 器件来源条件名；顺序无关）
+     *  R10-1 修：标准格式（非宽表）的器件记录是系统名——applyRebuildCurrent 的 srcCond 标注会跳过它们，
+     *  成员集合永远只有自身名 → 合并链在 apply 当场被 nbPruneChain 误杀。故此处补「名称级决策反查」：
+     *  名称映射里值为本条件名的键 = 并入本条件的来源记录名（= 链里存的叶子名口径）。
+     *  仅对非宽表数据生效（宽表有 srcCond 定位口径，且其键空间不同，不掺和）。 */
+    function nbMembersOfCond(data, c) {
+      var s = {}; s[c.name] = true;
+      (c.devices || []).forEach(function (d) { if (d.srcCond) s[d.srcCond] = true; });
+      if (data && !data.plainFixed) {
+        var mm = (P.getNameManualMap ? P.getNameManualMap() : null);
+        if (mm) {
+          Object.keys(mm).forEach(function (k) {
+            if (mm[k] === c.name && !(P.isUnnamedSystemName && P.isUnnamedSystemName(k))) s[k] = true;
+          });
+        }
+      }
+      return Object.keys(s);
+    }
+    /** R10-1：已应用条件的「叶子名集合」（累积链用——必须只含真来源记录名）。
+     *  与 nbMembersOfCond 的差别：**自身名只在它本身就是一条来源记录名（名称映射的键）时才算成员**。
+     *  名主合并（组名=成员名）→ 自身名是键 → 计入；新组名合并（组名 ∉ 成员名）→ 自身名是组名，
+     *  计进去会把「上一轮组名」混进链尾，下一轮校验必然对不上（链被误杀、跨应用累积断掉）。 */
+    function nbCondLeafNames(nm) {
+      var cur = currentData();
+      if (!cur || !nm) return null;
+      var cond = null;
+      (cur.conditions || []).forEach(function (c) { if (c.name === nm) cond = c; });
+      if (!cond) return null;
+      var isSys = function (k) { return !!(P.isUnnamedSystemName && P.isUnnamedSystemName(k)); };
+      var out = [], seen = {};
+      function push(k) { if (k && !seen[k]) { seen[k] = true; out.push(k); } }
+      var mm = (P.getNameManualMap ? P.getNameManualMap() : null);
+      if (cur.plainFixed) {
+        /* 宽表：自身名只在它本身就是一条来源条件名（名称映射的键）时才算成员——与标准格式分支同判据。
+         *  C-1 修：旧实现无条件 push(nm)，于是「新组名合并」在第二轮合并时把上一轮组名混进链尾
+         *  （叶子 = [上一轮组名, 成员…]），apply 时 nbChainTailOk 双分支皆不匹配 → nbPruneChain 整链误杀，
+         *  宽表「合并→应用→再合并→应用」的跨应用逐步退出失效。名主链（组名=成员条件名）仍是映射键 → 照旧计入。 */
+        if (mm && mm[nm] !== undefined) push(nm);
+        (cond.devices || []).forEach(function (d) { if (d.srcCond && !isSys(d.srcCond)) push(d.srcCond); });
+      } else {
+        /* 标准格式：器件记录是系统名（无 srcCond），成员只能由名称级决策反查；
+         *  自身名只在它本身就是一条来源记录名（映射的键）时才算成员——
+         *  新组名合并（组名 ∉ 成员名）时自身名是「组名」，计进去会把上一轮组名混进链尾。 */
+        if (mm && mm[nm] !== undefined) push(nm);
+        if (mm) Object.keys(mm).forEach(function (k) { if (mm[k] === nm && !isSys(k)) push(k); });
+        (cond.devices || []).forEach(function (d) { if (d.srcCond && !isSys(d.srcCond)) push(d.srcCond); });
+      }
+      if (!out.length) push(nm); // 无来源信息（未应用/无映射）→ 自身名
+      return out;
+    }
+    /** t117：名字集合相等（顺序无关——链尾与条件成员的一致性判据） */
+    function nbSameNameSet(a, b) {
+      if (!a || !b || a.length !== b.length) return false;
+      var s = {}, i;
+      for (i = 0; i < a.length; i++) s[a[i]] = (s[a[i]] || 0) + 1;
+      for (i = 0; i < b.length; i++) { if (!s[b[i]]) return false; s[b[i]]--; }
+      return true;
+    }
+    /** R10-1 修（缺口 3）：链尾合法性判据放宽为二选一——
+     *  ① 链尾 == 条件成员集合（组名本身是成员之一：名主合并）；
+     *  ② 链尾 == 成员集合去掉条件自身名（新组名合并：组名不是成员，故成员集合多出自身名）。
+     *  旧判据只认 ①，于是「新组名合并」的链在 apply 当场必被误杀（nbMembersOfCond 恒含自身名）。 */
+    function nbChainTailOk(data, cond, tail) {
+      var mem = nbMembersOfCond(data, cond);
+      if (nbSameNameSet(tail, mem)) return true;
+      var own = mem.indexOf(cond.name);
+      if (own < 0) return false;
+      mem = mem.slice(); mem.splice(own, 1);
+      return nbSameNameSet(tail, mem);
+    }
+    /** t117：按名读数据对象上的合并链（脏链自清：条件不存在/成员与链尾不一致 → delete 并当无链）
+     *  链按条件名存——条件被平铺还原或改名后旧链会串，故使用前一律校验 */
+    function nbChainOf(data, name) {
+      if (!data || !data.mergeChain || !name) return null;
+      var ch = data.mergeChain[name];
+      if (!ch || !ch.length) { if (ch !== undefined) delete data.mergeChain[name]; return null; }
+      var cond = null;
+      (data.conditions || []).forEach(function (c) { if (c.name === name) cond = c; });
+      var steps = nbStepsNorm(ch);
+      if (!steps.length) { delete data.mergeChain[name]; return null; }
+      // R10-1：旧格式（无组名）末步组名 = 链键 = 条件名（链按条件名存，末步就是造出该条件的那一步）
+      if (!steps[steps.length - 1].name) steps[steps.length - 1].name = name;
+      if (!cond || !nbChainTailOk(data, cond, steps[steps.length - 1].members)) { delete data.mergeChain[name]; return null; }
+      return steps;
+    }
+    /** t117：重算后清理失效链（平铺还原/改名后旧链不留——避免下次合并把旧成员算进来） */
+    function nbPruneChain(data) {
+      if (!data || !data.mergeChain) return;
+      Object.keys(data.mergeChain).forEach(function (k) { nbChainOf(data, k); });
+      if (!Object.keys(data.mergeChain).length) data.mergeChain = null;
+    }
+    /** t117：卡内「行名 = 叶子名」的行（逐步退出时可直接搬走的行） */
+    function nbLeafRows(card, nm) {
+      var out = [];
+      (card.ri || []).forEach(function (ri) {
+        var row = previewData.rows[ri];
+        if (row && row.name === nm) out.push(ri);
+      });
+      return out;
+    }
+    /** t117：本次要退出的名字是否都能在卡内定位到行（定位不到 → 不做画板级逐步退出，交回平铺分支） */
+    function nbStepRowsOk(card, detach) {
+      for (var i = 0; i < detach.length; i++) { if (!nbLeafRows(card, detach[i]).length) return false; }
+      return true;
+    }
+    /** t117：叶子名 → 器件数（画板基础卡口径——拆出的独立卡 ×N 与来源卡一致） */
+    function nbLeafDevCount(nm) {
+      var dev = null;
+      (nbBaseCards() || []).forEach(function (c) {
+        if (dev !== null) return;
+        if (c.key === nm || c.repName === nm || nbDefaultName(c) === nm) dev = (c.devCount !== undefined ? c.devCount : c.ri.length);
+      });
+      return dev;
+    }
+    /** t117：卡自身的合并链（画板内未应用的合并）——>=2 步且退出名可在卡内定位才可逐步退出 */
+    function nbCardChain(card) {
+      if (!card || !card.mergeSteps || card.mergeSteps.length < 2) return null;
+      var steps = nbStepsNorm(nbStepsCopy(card.mergeSteps));
+      if (steps.length < 2) return null;
+      var last = steps[steps.length - 1], prev = steps[steps.length - 2];
+      var det = nbChainDetach(last.members, prev.members);
+      if (!det.length || !nbStepRowsOk(card, det)) return null;
+      var cn = card.key || card.repName || nbDefaultName(card);
+      /* R10-1 修（缺口 2·画板级）：退出名=卡名（组名就是被退出的成员名）且上一步没存组名（旧格式链）→
+       *  余卡无处改名，两张同名卡应用时并回原状（静默 no-op）→ 交回平铺分支（真实变化）。 */
+      if (!prev.name && det.indexOf(cn) >= 0) return null;
+      return { name: cn, steps: steps };
+    }
+    /** t117：卡对应的数据级合并链（按应用键/条件名查——已应用的条件；脏链在 nbChainOf 内自清） */
+    function nbDataChain(card) {
+      var cur = currentData();
+      if (!cur || !cur.mergeChain) return null;
+      var cands = [];
+      function push(v) { if (v && cands.indexOf(v) < 0) cands.push(v); }
+      push(card.key); push(card.repName); push(nbDefaultName(card));
+      (card.ri || []).forEach(function (ri) { push(boardKeyFor(card, ri)); });
+      for (var i = 0; i < cands.length; i++) {
+        var ch = nbChainOf(cur, cands[i]);
+        if (!ch || !ch.length) continue;
+        if (ch.length >= 2) {
+          var last = ch[ch.length - 1], prev = ch[ch.length - 2];
+          var det = nbChainDetach(last.members, prev.members);
+          /* R10-1 修（缺口 2·数据级）：退出名=条件名且上一步没存组名（旧格式链）→
+           *  映射恒等、重算零变化（假 toast）→ 交回平铺分支。 */
+          if (!prev.name && det.indexOf(cands[i]) >= 0) continue;
+        }
+        return { name: cands[i], steps: ch };
+      }
+      return null;
+    }
+    /** R10-1：按「卡名 / 卡叶子集合」反查已落盘链。
+     *  分次「合并 → 应用」时链键 = 上一轮的组名：新组名合并（本轮组名 ≠ 上一轮组名）时，
+     *  只按本轮组名查不到链，跨应用累积会断（退化成 1 步链 → 逐步退出的语义丢失）。 */
+    function nbChainSeedOf(card) {
+      var cur = currentData();
+      if (!cur || !cur.mergeChain || !card) return null;
+      var leaves = nbCardLeaves(card);
+      var names = [card.key, card.repName, nbDefaultName(card)];
+      var i, ch;
+      for (i = 0; i < names.length; i++) {
+        ch = names[i] ? nbChainOf(cur, names[i]) : null;
+        if (ch && ch.length && nbSameNameSet(leaves, ch[ch.length - 1].members)) return ch;
+      }
+      var keys = Object.keys(cur.mergeChain); // 快照遍历（nbChainOf 会就地删脏链）
+      for (i = 0; i < keys.length; i++) {
+        ch = nbChainOf(cur, keys[i]);
+        if (ch && ch.length && nbSameNameSet(leaves, ch[ch.length - 1].members)) return ch;
+      }
+      return null;
+    }
+    /** N8 修：应用态下的「记录名 → 当前条件名」翻译表。
+     *  背景：应用后画板行是**条件名**口径（showNamePreview 的 applied 分支），而 parser 的 manual 映射
+     *  按**记录名**取键（激活判据还是「全记录命中」）。两层之间原本靠上一轮快照
+     *  （state.groupRulesSnapshot.manual，键=记录名）翻译（main.js 的 t91 链式累计）。
+     *  guided 兜底「无改动点应用」会把 manual 清空、且**首次应用本就没有 manual** → 快照为 null →
+     *  无翻译源 → 本轮 bm 的键（条件名）在 parser 侧一个都命不中 → manual 不激活 →
+     *  合并静默丢失（画板显示合并成功、假「已应用」toast、重算回默认分组、链不落盘）。
+     *  故快照缺失时直接用**当前数据**反查同一张表：
+     *    器件取位 fwdPos/revPos → namePreview[pos].name（与 applyRebuildCurrent 来源标注同一口径）；
+     *    系统名记录（跟随器）按恒等回填——parser 侧「恒等 + 有方向」回退容器语义（并入最近命名条件），
+     *    与 applyPreview 手工路径写恒等映射完全同款，故同名系统记录不会被拽进某一个条件。
+     *  仅标准格式（有 namePreview）有效；宽表 namePreview=null、且其键空间本就是条件名，不受影响。 */
+    function nbPrevMapOfData(d) {
+      if (!d || d.plainFixed || !d.conditions || !d.conditions.length) return null;
+      var np = d.namePreview || null;
+      if (!np || !np.length) return null;
+      var out = {}, n = 0;
+      d.conditions.forEach(function (c) {
+        (c.devices || []).forEach(function (dev) {
+          var poss = [dev.fwdPos, dev.revPos];
+          poss.forEach(function (pos) {
+            var nm = (pos >= 0 && np[pos]) ? np[pos].name : null;
+            if (!nm || out[nm] !== undefined) return;
+            out[nm] = (P.isUnnamedSystemName && P.isUnnamedSystemName(nm)) ? nm : c.name;
+            n++;
+          });
+        });
+      });
+      return n ? out : null;
+    }
+    /** R10c：卡片拆分口径（分层，唯一判定源——按钮显隐/提示文案/实际执行共用）：
+     *  chain=退出最后一次合并（合并链 ≥2 步，逐步拆分）｜members=还原成员条件（合并卡，只降一层）｜
+     *  blocks=拆成块条件（通道级，单行容器卡）｜rows=按行还原
+     *  返回 null = 不可拆。合并卡优先走 members——否则「只拆其中一行、其它行消失」。 */
+    function nbSplitInfo(card) {
+      if (!card || !card.grouped) return null;
+      var isEn = (typeof I18N !== 'undefined' && I18N.getLang() === 'en');
+      /* t117：有链且 ≥2 步 → 逐步退出（画板内链优先于已落盘链）；1 步或无链 → 既有分档 */
+      var cch = nbCardChain(card) || nbDataChain(card);
+      if (cch && cch.steps.length >= 2) {
+        var lastC = cch.steps[cch.steps.length - 1], prevC = cch.steps[cch.steps.length - 2];
+        var det = nbChainDetach(lastC.members, prevC.members);
+        if (det.length) {
+          // R10-1：退出会「改名」时（余卡要回到上一步组名）把目标名一并提示，否则文案与旧版逐字一致
+          var cnC = card.key || card.repName || nbDefaultName(card);
+          var renC = (prevC.name && prevC.name !== cnC) ? (' → ' + prevC.name) : '';
+          return { kind: 'chain', n: cch.steps.length, detach: det,
+            tip: (isEn ? ('Split: undo the last merge (restore ' + det.join(', ') + renC + ') · ' + (cch.steps.length - 1) + ' merge step(s) left')
+                       : ('拆分：退出最后一次合并（还原 ' + det.join('、') + renC + '）· 还剩 ' + (cch.steps.length - 1) + ' 步')) };
+        }
+      }
+      if (card.srcNames && card.srcNames.length && card.memRowIdxs && card.memRowIdxs.length) {
+        return { kind: 'members', n: card.memRowIdxs.length,
+          tip: (isEn ? ('Split: restore ' + card.memRowIdxs.length + ' member condition(s) — one level up')
+                     : ('拆分：还原为 ' + card.memRowIdxs.length + ' 个成员条件（只降一层，不会直接拆到通道）')) };
+      }
+      var blocks = (card.ri.length === 1) ? nbCardContainerBlocks(card) : null;
+      if (blocks) {
+        return { kind: 'blocks', n: blocks.length,
+          tip: (isEn ? ('Split: separate this condition into ' + blocks.length + ' block conditions (channel level)')
+                     : ('拆分：把这个条件按块拆成 ' + blocks.length + ' 个块条件（通道级）')) };
+      }
+      if (card.ri.length > 1) {
+        return { kind: 'rows', n: card.ri.length,
+          tip: (isEn ? 'Split this group back to its rows (one level)' : ('拆分：还原为卡内的 ' + card.ri.length + ' 行（只降一层）')) };
+      }
+      /* R10-1 修：只剩 1 步链且无成员行可平铺（标准格式已应用态的常态）→ 一次退完全部成员
+       *  （放在最后 = 只在前面的分档都不可用时接管，宽表既有「平铺档」语义不受影响）。 */
+      if (cch && cch.steps.length === 1 && cch.steps[0].members.length >= 2) {
+        return { kind: 'chainEnd', n: cch.steps[0].members.length, detach: cch.steps[0].members.slice(),
+          tip: (isEn ? ('Split: undo the merge completely (restore ' + cch.steps[0].members.length + ' original conditions)')
+                     : ('拆分：还原为原始条件（一次退出全部 ' + cch.steps[0].members.length + ' 个成员）')) };
+      }
+      return null;
+    }
+    /** t117：逐步退出（画板级——画板内合并、尚未应用）——把链尾新并入的名字还原成独立卡，
+     *  合并卡自身缩回上一步成员集合（mergeSteps 减一）。定位不到行时返回 false（交回平铺分支）。 */
+    function nbSplitStepCard(ci, card, steps) {
+      var b = previewData.board;
+      if (!b || !steps || steps.length < 2) return false;
+      var isEn = (typeof I18N !== 'undefined' && I18N.getLang() === 'en');
+      var lastS = steps[steps.length - 1], prevS = steps[steps.length - 2];
+      var detach = nbChainDetach(lastS.members, prevS.members);
+      if (!detach.length || !nbStepRowsOk(card, detach)) return false;
+      nbPushUndo('split', { target: card.repName, members: detach, expect: 'chain-step' }); // t115：条目化（逐步退出一条）
+      var newCards = [], movedRis = [], movedDev = 0;
+      detach.forEach(function (nm) {
+        var ris = nbLeafRows(card, nm);
+        var dev = nbLeafDevCount(nm);
+        if (dev === null) {
+          dev = 0;
+          ris.forEach(function (ri) { var r0 = previewData.rows[ri]; dev += (r0 && r0.devN !== undefined) ? r0.devN : 1; });
+        }
+        movedDev += dev;
+        Array.prototype.push.apply(movedRis, ris);
+        newCards.push({ key: nm, repName: nm, color: groupColor(nm), ri: ris, grouped: false, sel: false, devCount: dev });
+      });
+      card.ri = (card.ri || []).filter(function (ri) { return movedRis.indexOf(ri) < 0; });
+      if (card.devCount !== undefined) card.devCount = Math.max(0, card.devCount - movedDev);
+      card.sel = false;
+      /* R10-1 修（缺口 2·画板级）：余卡改名回上一步组名——组名=被退出成员名时，
+       *  不改名会在应用装配层按「同名 = 同条件」原地并回（逐步退出等于没退）。 */
+      if (prevS.name && prevS.name !== (card.key || card.repName)) {
+        card.key = prevS.name;
+        card.repName = prevS.name;
+        card.color = groupColor(prevS.name);
+        card.dirty = true;
+      }
+      card.mergeSteps = nbStepsCopy(steps.slice(0, -1)); // 链减一（1 步后下次点击走平铺还原）
+      var arr = b.cards.slice();
+      Array.prototype.splice.apply(arr, [ci, 1].concat([card].concat(newCards)));
+      b.cards = arr;
+      b.groupName = '';
+      nbRerenderGrid();
+      var left = steps.length - 1;
+      T.showToast(isEn
+        ? ('Exited the last merge (restored ' + detach.join(', ') + ') — ' + left + ' merge step(s) left (click again to continue)')
+        : ('已退出「' + detach.join('、') + '」——还剩 ' + left + ' 步合并（再点一次继续）'));
+      return true;
+    }
+    /** t117：逐步退出（数据级——已应用条件的合并链）——改条件名映射 + 宽表位置级决策 → 链减一 → 重算当前文件 → 关面板。
+     *  规格：detach 名字 map[nm]=nm（内存+存储同写）；宽表另把 d.srcCond ∈ detach 的器件位置改回自身条件名。
+     *  R10-1 修：链只剩 1 步时同样可用（= 一次退完全部成员，还原为原始条件）；
+     *            余下成员改名回「上一步组名」（名主退出的关键——不改名就是静默 no-op）。 */
+    function nbSplitStepData(card, chinfo) {
+      var cur = currentData();
+      if (!cur || !chinfo || !chinfo.steps || !chinfo.steps.length) return false;
+      var isEn = (typeof I18N !== 'undefined' && I18N.getLang() === 'en');
+      var name = chinfo.name;
+      var steps = chinfo.steps;
+      var lastS = steps[steps.length - 1];
+      var prevS = (steps.length >= 2) ? steps[steps.length - 2] : null;
+      var detach = prevS ? nbChainDetach(lastS.members, prevS.members) : lastS.members.slice();
+      if (!detach.length) return false;
+      var prevName = prevS ? prevS.name : null;
+      /* R10-1 修（缺口 2·数据级）：退出名=条件名且上一步没存组名（旧格式链）→ 映射恒等、重算零变化，
+       *  只会发一条假 toast「已退出」→ 交回平铺分支（真实变化）。
+       *  只对「还有上一步」的多步链成立：1 步链的退出 = 一次退完全部成员（本身就可能是有变化的操作）。 */
+      if (steps.length >= 2 && !prevName && detach.indexOf(name) >= 0) return false;
+      var isSys = function (nm) { return !!(P.isUnnamedSystemName && P.isUnnamedSystemName(nm)); };
+      /* ① 条件名映射：detach → 恒等（恢复成独立条件；内存与存储同写，与应用路径同一套语义） */
+      var m = (P.getNameManualMap ? P.getNameManualMap() : null) || {};
+      var changed = false;
+      detach.forEach(function (nm) {
+        if (isSys(nm)) return;
+        if (m[nm] !== nm) changed = true;
+        m[nm] = nm;
+      });
+      /* ①b 余下成员 → 上一步组名（组名=被退出成员名时，不改名会被「同名 = 同条件」并回原状） */
+      if (prevName) {
+        prevS.members.forEach(function (nm) {
+          if (isSys(nm)) return;
+          if (m[nm] !== prevName) changed = true;
+          m[nm] = prevName;
+        });
+      }
+      if (!changed) return false; // 无任何实际变化 → 不做假动作（交回平铺分支）
+      saveManualMapFor(m); // R10-5：会话级规则不因一次退出被提升为持久化
+      /* ② 宽表：位置级决策同步（退出成员的块回自身条件名；余下成员的块回上一步组名） */
+      if (cur.plainFixed) {
+        var pm = (P.getPlainGroupMap ? P.getPlainGroupMap() : null) || cur.plainMap || {};
+        var cond = null;
+        (cur.conditions || []).forEach(function (c) { if (c.name === name) cond = c; });
+        if (cond) {
+          (cond.devices || []).forEach(function (d) {
+            if (!d.srcCond) return;
+            var pos = (d.fwdPos >= 0) ? d.fwdPos : d.revPos;
+            if (pos < 0) return;
+            if (detach.indexOf(d.srcCond) >= 0) { pm[pos] = d.srcCond; return; } // 退出成员 → 回自身条件名
+            /* A2 修：余下成员 → 回上一步组名。旧实现只回退 detach 成员，余下成员的位置级决策不动，
+             *  名主退出（组名=被退出条件名）时重算零变化 = 假 toast，新名链同根表现为「余卡改名未落地」。 */
+            if (prevName && prevS && prevS.members.indexOf(d.srcCond) >= 0) pm[pos] = prevName;
+          });
+        }
+        if (P.setPlainGroupMap) P.setPlainGroupMap(pm);
+        cur.plainMap = pm;
+      }
+      /* ③ 链减一（深拷贝；长度变 1 后下次点击走「退完全部」；退完则整条删除） */
+      if (!cur.mergeChain) cur.mergeChain = {};
+      var leftSteps = steps.slice(0, -1);
+      if (leftSteps.length) cur.mergeChain[name] = nbStepsCopy(leftSteps);
+      else delete cur.mergeChain[name];
+      /* C-2 修：余下链随「余下条件改名」改挂到上一步组名下——否则链键仍是已退出的条件名
+       *  （重算后该条件已不存在）→ 「还剩 N 步（再点一次继续）」的承诺失真、下次读取必被自清。
+       *  旧键随条件消失自清（nbChainOf 读时清理），这里只补新键。 */
+      if (leftSteps.length && prevName && prevName !== name && !cur.mergeChain[prevName]) {
+        cur.mergeChain[prevName] = nbStepsCopy(leftSteps);
+      }
+      /* ④ 当前文件按原文重算（原文/位置级决策/链随数据对象携带） */
+      var nd = rebuildFromRaw(cur);
+      if (!nd) {
+        T.showToast(isEn ? 'Split failed — re-load the file.' : '拆分失败——请重新加载文件。');
+        return true;
+      }
+      var f = state.files[state.currentIndex];
+      if (f) f.data = nd;
+      /* C-3 修：数据级退出改写了条件名映射 → 应用态快照必须同步刷新。
+       *  不刷新的后果：重开画板按陈旧快照取 srcNames（main.js:486 判据 snap[k]===c.name && k!==c.name），
+       *  余下合并卡的来源名全指向已退出条件 → 卡上没有 ⛓ 拆分按钮（逐步退出中断），
+       *  且陈旧 srcNames 可能含已退出成员（幽灵成员）——再点拆分+应用会把刚退出的成员并回去。
+       *  guided 保持原值（退出不动块规则）；manual 取退出后的映射（与重建口径同源）。 */
+      state.groupRulesSnapshot = {
+        guided: (state.groupRulesSnapshot && state.groupRulesSnapshot.guided) || null,
+        manual: (P.getNameManualMap ? P.getNameManualMap() : null)
+      };
+      renderAll();
+      /* ⑤ 收尾：关面板（与「恢复原始分组」同款——画板行引用已随重算失效） */
+      var mm = $('name-preview-modal');
+      if (mm) mm.hidden = true;
+      previewData = null;
+      var left = steps.length - 1;
+      var backTxt = prevName ? ('（余下改回「' + prevName + '」）') : '';
+      var backEn = prevName ? (' (rest back to "' + prevName + '")') : '';
+      T.showToast(left > 0
+        ? (isEn ? ('Exited the last merge ("' + detach.join(', ') + '")' + backEn + ' — ' + left + ' merge step(s) left (click again to continue)')
+                : ('已退出「' + detach.join('、') + '」' + backTxt + '——还剩 ' + left + ' 步合并（再点一次继续）'))
+        : (isEn ? ('Exited the last merge ("' + detach.join(', ') + '")' + backEn + ' — restored to the original conditions')
+                : ('已退出「' + detach.join('、') + '」' + backTxt + '——已还原为原始条件')));
+      return true;
+    }
     /** t103：拆分合并卡——组卡 → 成员唯一名卡（单项还原——即时预览；与 t95「还原此组」同语义但卡片直显）
-     *  t105：系列合并卡（srcNames/memRowIdxs——快照成员）→ 拆成成员条件卡（devN 来自快照） */
+     *  t105：系列合并卡（srcNames/memRowIdxs——快照成员）→ 拆成成员条件卡（devN 来自快照）
+     *  R10：宽表容器卡 → 每个块一张卡（走位置级决策；名字跨条件唯一化，与左栏 ⤢ 同一套命名方案） */
     function nbSplitCard(ci) {
       var b = previewData.board;
       if (!b) return;
       var card = b.cards[ci];
       if (!card || !card.grouped) return;
+      /* t117：逐步拆分优先——① 画板内合并链（未应用）② 数据级合并链（已应用的条件）；
+       *   都没有 / 只剩 1 步 → 落回下面的既有分档（合并卡=成员条件、容器卡=块、多行卡=按行） */
+      var cchain = nbCardChain(card);
+      if (cchain && nbSplitStepCard(ci, card, cchain.steps)) return;
+      var dchain = nbDataChain(card);
+      if (dchain && dchain.steps.length >= 2 && nbSplitStepData(card, dchain)) return;
+      /* t117：走到平铺分支 = 卡上的链到此为止（1 步链还原后不该再被后续合并继承——补丁 3）。
+       *  数据侧旧链不在此处删：平铺结果要「应用」才落地，提前删会让「↶ 撤销上一次应用」的快照丢链；
+       *  应用重算时由 nbPruneChain（applyRebuildCurrent）就地清除，使用前另有一律校验兜底。 */
+      if (card.mergeSteps) card.mergeSteps = null;
+      /* R10c：拆分分层——一次只降一层，且合并卡永远先还原成成员条件：
+       *   ① 合并卡（带成员行 srcNames/memRowIdxs，或卡内多行）→ 还原成成员条件；
+       *   ② 单行容器卡（顺序切组出的条件）→ 拆成块条件（通道级）。
+       *   注：合并卡里可能某一行本身就是容器，若让容器分支优先会「只拆那一行、其它行凭空消失」（用户实测 1+4 合并后拆分 → 1 被拆到通道级、4 消失）。
+       *   判定与按钮显隐/提示文案同源（nbSplitInfo）。 */
+      var sinfo = nbSplitInfo(card);
+      /* R10-1 修：只剩 1 步链（标准格式已应用态的常态：无成员行可平铺）→ 一次退完全部成员。
+       *  放在平铺分档之前判定，但与 nbSplitInfo 同源（唯一的按钮显隐/提示/执行判定源）。 */
+      if (sinfo && sinfo.kind === 'chainEnd') {
+        var echain = dchain || nbDataChain(card);
+        if (echain && nbSplitStepData(card, echain)) return;
+      }
+      var cblocks = (sinfo && sinfo.kind === 'blocks') ? nbCardContainerBlocks(card) : null;
+      if (cblocks) {
+        var cname = card.repName || card.key;
+        var plan = plainSplitPlan(currentData(), cname, cblocks);
+        nbPushUndo('split', { target: cname, members: plan.map(function (p) { return p.label; }), expect: 'plain-blocks' });
+        var blockCards = plan.map(function (p) {
+          var ri = previewData.rows.length;
+          previewData.rows.push({ name: p.label, tplId: null, key: p.label, ch: '', dir: '', devN: 1, srcNames: null, blockPos: p.pos });
+          return { key: p.label, repName: p.label, color: groupColor(p.label), ri: [ri], grouped: false, sel: false, devCount: 1 };
+        });
+        var arr0 = b.cards.slice();
+        Array.prototype.splice.apply(arr0, [ci, 1].concat(blockCards));
+        b.cards = arr0;
+        b.groupName = '';
+        nbRerenderGrid();
+        T.showToast((typeof I18N !== 'undefined' && I18N.getLang() === 'en')
+          ? ('Split into ' + blockCards.length + ' block conditions — click Apply to take effect')
+          : ('已拆成 ' + blockCards.length + ' 个块条件——点「应用」生效'));
+        return;
+      }
       if (card.srcNames && card.srcNames.length && card.memRowIdxs && card.memRowIdxs.length) {
         nbPushUndo('split', { target: card.repName, members: card.srcNames, expect: 'series-split' }); // t115：条目化（type/target/members/expect）
         var newCards = [];
@@ -7842,6 +8432,9 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         b.cards = arr;
         b.groupName = '';
         nbRerenderGrid();
+        T.showToast((typeof I18N !== 'undefined' && I18N.getLang() === 'en')
+          ? ('Restored ' + (newCards.length - (card.ri && card.ri.length ? 1 : 0)) + ' member condition(s) — click Apply to take effect')
+          : ('已还原为 ' + (newCards.length - (card.ri && card.ri.length ? 1 : 0)) + ' 个成员条件——点「应用」生效'));
         return;
       }
       if (card.ri.length <= 1) return;
@@ -7853,7 +8446,12 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       });
       nbPushUndo('split', { target: card.repName, members: order, expect: 'split' }); // t115：条目化（type/target/members/expect——order 已构建）
       var newCards = order.map(function (nm) {
-        return { key: nm, repName: nm, color: groupColor(nm), ri: byName[nm].slice(), grouped: false, sel: false, devCount: byName[nm].length };
+        // t116 修复：行卡器件数取「行自身器件数」与「行数」的较大者——
+        //   宽表：一行 = 一个条件（row.devN = 该条件器件数，如 6），行数=1 → 6（原写行数 → 误显示 ×1）
+        //   标准：一行 = 一条同名记录（row.devN=1，行数=N）→ N（原行数口径，行为不变；直接用 devN 会退化成 ×1）
+        var r0 = previewData.rows[byName[nm][0]];
+        var dn = (r0 && r0.devN !== undefined) ? r0.devN : 1;
+        return { key: nm, repName: nm, color: groupColor(nm), ri: byName[nm].slice(), grouped: false, sel: false, devCount: Math.max(dn, byName[nm].length) };
       });
       var arr = b.cards.slice();
       Array.prototype.splice.apply(arr, [ci, 1].concat(newCards));
@@ -7897,9 +8495,17 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         if (nm === name) riMoved.push(ri);
       });
       if (!riMoved.length) return false;
-      var newCards2 = [{ key: name, repName: name, color: groupColor(name), ri: riMoved.slice(), grouped: false, sel: false, devCount: riMoved.length }];
+      /* R10-4 修：器件数按「叶子条件口径」取（nbLeafDevCount），不再用行数——宽表 1 行 = 6 器件，
+       *  用行数会让合并卡显示 ×17（应 ×12）、移出的卡显示 ×1（应 ×6）。取不到时回落到行/行内 devN 之和。 */
+      var movedDev2 = nbLeafDevCount(name);
+      if (movedDev2 === null) {
+        movedDev2 = 0;
+        riMoved.forEach(function (ri) { var r0 = previewData.rows[ri]; movedDev2 += (r0 && r0.devN !== undefined) ? r0.devN : 1; });
+      }
+      var newCards2 = [{ key: name, repName: name, color: groupColor(name), ri: riMoved.slice(), grouped: false, sel: false, devCount: movedDev2 }];
       var riRest = card.ri.filter(function (ri) { return riMoved.indexOf(ri) < 0; });
-      var nc2 = { key: card.key, repName: card.repName, color: card.color, ri: riRest, grouped: true, sel: false, uniqName: card.uniqName, dirGroup: card.dirGroup, devCount: (card.devCount !== undefined ? card.devCount : card.ri.length) - riMoved.length, srcNames: card.srcNames, memRowIdxs: card.memRowIdxs };
+      var nc2Dev = (card.devCount !== undefined) ? Math.max(0, card.devCount - movedDev2) : Math.max(0, card.ri.length - riMoved.length);
+      var nc2 = { key: card.key, repName: card.repName, color: card.color, ri: riRest, grouped: true, sel: false, uniqName: card.uniqName, dirGroup: card.dirGroup, devCount: nc2Dev, srcNames: card.srcNames, memRowIdxs: card.memRowIdxs };
       var arr2 = b.cards.slice();
       Array.prototype.splice.apply(arr2, [ci, 1].concat([nc2].concat(newCards2)));
       b.cards = arr2;
@@ -7978,11 +8584,52 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         devAll += (c.devCount !== undefined ? c.devCount : c.ri.length);
       });
       var firstIdx = b.cards.indexOf(sels[0]);
+      /* t117：合并链累计——叶子（选中卡：有链用链尾，否则卡内叶子）按顺序去重拼接 = 这一步合并后的成员集合。
+       *  prevSteps 优先取「选中卡自身的链」，其次取「已落盘的链」（分次「合并→应用」时链要跨应用累积），
+       *  都没有才由卡内叶子起步；mergeSteps = prevSteps.concat([累积集合])。 */
+      /* 已落盘链（校验通过才算——脏链自清）。种子只在「主卡（第一张选中卡）就是该条件本身」时生效
+       * （叶子集合相等判据）——画板里先平铺拆过、数据尚未应用时，不得把旧成员算进来。 */
+      var seeded = nbChainOf(currentData(), name);
+      if (!seeded || !seeded.length) seeded = nbChainSeedOf(sels[0]); // R10-1：新组名合并——链在「被并入的成员卡」名下
+      var seedLast = null;
+      if (seeded && seeded.length) {
+        if (nbSameNameSet(nbCardLeaves(sels[0]), seeded[seeded.length - 1].members)) seedLast = seeded[seeded.length - 1].members.slice();
+        else seeded = null;
+      }
+      var acc = [], prevSteps = null;
+      sels.forEach(function (c, si) {
+        var lv;
+        if (c.mergeSteps && c.mergeSteps.length) lv = nbStepMembers(c.mergeSteps[c.mergeSteps.length - 1]);
+        else if (si === 0 && seedLast) lv = seedLast.slice(); // 种子序（链尾顺序 = 合并历史顺序）
+        else lv = nbCardLeaves(c);
+        (lv || []).forEach(function (nm) { if (acc.indexOf(nm) < 0) acc.push(nm); });
+        if (!prevSteps && c.mergeSteps && c.mergeSteps.length) prevSteps = nbStepsNorm(nbStepsCopy(c.mergeSteps));
+      });
+      if (!prevSteps && seeded && seeded.length) prevSteps = seeded;
+      var mergeSteps;
+      if (prevSteps && prevSteps.length && nbSameNameSet(acc, prevSteps[prevSteps.length - 1].members)) {
+        mergeSteps = prevSteps; // 退化合并（只选了一张卡/成员被重复并入——累积集合没变）→ 不追加空步（否则「还剩 N 步」虚高）
+      } else {
+        // R10-1：新步带组名（= 本次合并的组名）——逐步退出时余卡要靠它改回上一步的组名
+        mergeSteps = (prevSteps || []).concat([{ name: name, members: acc.slice() }]);
+      }
       var excluded = sels.slice();
       var rest = b.cards.filter(function (c) { return excluded.indexOf(c) < 0; });
       var exist = null;
       rest.forEach(function (c) { if (c.key === name) exist = c; });
       if (exist) {
+        // t117：并入已存在的同名卡——exist 旧链（或已落盘链）+ 新累积集合（exist 叶子 + 选中卡叶子）
+        var exPrev = (exist.mergeSteps && exist.mergeSteps.length) ? nbStepsNorm(nbStepsCopy(exist.mergeSteps)) : null;
+        var exLeaves = (exPrev && exPrev.length) ? exPrev[exPrev.length - 1].members.slice() : nbCardLeaves(exist);
+        if (!exPrev) {
+          var seedE = nbChainOf(currentData(), name);
+          if (seedE && seedE.length && nbSameNameSet(exLeaves, seedE[seedE.length - 1].members)) { exPrev = seedE; exLeaves = seedE[seedE.length - 1].members.slice(); }
+        }
+        var accE = [];
+        exLeaves.concat(acc).forEach(function (nm) { if (accE.indexOf(nm) < 0) accE.push(nm); });
+        exist.mergeSteps = (exPrev && exPrev.length && nbSameNameSet(accE, exPrev[exPrev.length - 1].members))
+          ? exPrev // 退化合并 → 不追加空步
+          : (exPrev || []).concat([{ name: name, members: accE.slice() }]);
         exist.ri = exist.ri.concat(riAll);
         exist.devCount = (exist.devCount !== undefined ? exist.devCount : exist.ri.length) + devAll;
         exist.grouped = true;
@@ -7990,7 +8637,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         b.cards = rest;
       } else {
         var arr = rest.slice();
-        arr.splice(firstIdx, 0, { key: name, repName: name, color: groupColor(name), ri: riAll, grouped: true, sel: false, dirty: true, devCount: devAll }); // t45：归组卡 dirty；t87：devCount
+        arr.splice(firstIdx, 0, { key: name, repName: name, color: groupColor(name), ri: riAll, grouped: true, sel: false, dirty: true, devCount: devAll, mergeSteps: mergeSteps }); // t45：归组卡 dirty；t87：devCount；t117：mergeSteps（逐步拆分数据源）
         b.cards = arr;
       }
       b.groupName = '';
@@ -8068,6 +8715,32 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       }
       return { kind: 'none', members: [] };
     }
+    /** t116：卡片「依据」小字——这张卡为什么被分在一起（用户看到不合预期的合并时可当场对照）
+     *  判据（与 nbSrcList / nbCardContainerBlocks 同源，不新增口径）：
+     *   ① 合并卡：成员条件 ≥2 个（srcNames 快照，或卡内去重后的成员行名）→「由 1、4 合并而来」
+     *   ② 宽表容器卡：该行 plainBlocks.length > 1 →「6 块共用一个时间戳 → 归为 1 个条件」
+     *   ③ 其余 → null（卡片第二行保持原样）
+     *  注：标准格式一个条件含多条同名记录（如 26 行同名）→ nbSrcList 去重后=1 → 不误报为「合并」。 */
+    function nbWhyText(card) {
+      if (!card || !card.grouped) return null;
+      var isEn = (typeof I18N !== 'undefined' && I18N.getLang() === 'en');
+      var srcs = nbSrcList(card);
+      if (srcs.length > 1) {
+        if (srcs.length <= 3) {
+          return isEn ? ('Merged from ' + srcs.join(', '))
+                      : ('由 ' + srcs.join('、') + ' 合并而来');
+        }
+        return isEn
+          ? ('Merged from ' + srcs.slice(0, 3).join(', ') + ' and ' + (srcs.length - 3) + ' more (' + srcs.length + ' conditions)')
+          : ('由 ' + srcs.slice(0, 3).join('、') + ' 等 ' + srcs.length + ' 个条件合并而来');
+      }
+      var blocks = nbCardContainerBlocks(card);
+      if (blocks && blocks.length > 1) {
+        return isEn ? (blocks.length + ' blocks, one timestamp → 1 condition')
+                    : (blocks.length + ' 块共用一个时间戳 → 归为 1 个条件');
+      }
+      return null;
+    }
     function nbGridHtml() {
       var cards = previewData.board.cards;
       var html = '';
@@ -8106,13 +8779,22 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         badges += '<span class="nb-srcbadge" title="' + esc((isEn ? 'Source: ' : '来源: ') + srcs.join(', ')) + '">' + srcDots + '</span>';
         var fam = nbFamilyCoreOf(card.repName);
         if (fam) badges += '<span class="nb-fambadge" title="' + esc((isEn ? 'Series family: ' : '系列主体: ') + fam) + '">' + esc(fam) + '</span>';
+        // t116：卡片第二行——主名与 repName 重复时改显「依据」小字（不占额外行高）；不重复时依据并入卡片 title
+        var why = nbWhyText(card);
+        var whyLine = '', name2Line = '';
+        if (why && condName === card.repName) {
+          whyLine = '<span class="nb-why" title="' + esc(why) + '">' + esc(why) + '</span>';
+        } else {
+          name2Line = '<span class="nb-cname2" title="' + esc(card.repName) + '">' + esc(card.repName) + '</span>';
+          if (why) titleTxt += '\n' + why;
+        }
         html += '<div class="nb-card ' + card.color + (card.sel ? ' sel' : '') + '" data-ci="' + ci + '" title="' + esc(titleTxt) + '">' +
           (badges ? '<span class="nb-badges">' + badges + '</span>' : '') +
           '<span class="nb-cname">' + esc(condName) + '</span>' +
-          '<span class="nb-cname2" title="' + esc(card.repName) + '">' + esc(card.repName) + '</span>' +
+          name2Line + whyLine +
           (memPrev ? '<span class="nb-cmem" data-ci="' + ci + '" title="' + esc(isEn ? 'Member list — click to open' : '成员清单 — 点击打开') + '">' + esc(memPrev) + '</span>' : '') +
-          '<span class="nb-ccount">' + (card.grouped ? '🗂 ' : '') + '×' + cnt + (card.grouped && (card.ri.length > 1 || (card.srcNames && card.srcNames.length))
-            ? '<button type="button" class="nb-split" data-ci="' + ci + '" title="' + esc(isEn ? 'Split this group back to member cards' : '拆分此组为成员卡（单项还原）') + '">' + (isEn ? '⛓ Split' : '⛓ 拆分') + '</button>' : '') + '</span></div>';
+          '<span class="nb-ccount">' + (card.grouped ? '🗂 ' : '') + '×' + cnt + (nbSplitInfo(card)
+            ? '<button type="button" class="nb-split" data-ci="' + ci + '" title="' + esc(nbSplitInfo(card).tip) + '">' + (isEn ? '⛓ Split' : '⛓ 拆分') + '</button>' : '') + '</span></div>';
       });
       return html;
     }
@@ -8134,19 +8816,44 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         var isEn = (typeof I18N !== 'undefined' && I18N.getLang() === 'en');
         ub.textContent = isEn ? '↺ Undo (' + n + ')' : '↺ 撤销（' + n + '）';
       }
+      var pb = document.querySelector('.nb-toolbar .nb-pending'); // t116：待应用提示恒同步（操作后局部刷新）
+      if (pb) {
+        var pt = nbPendingText();
+        pb.textContent = pt;
+        pb.hidden = !pt;
+      }
+    }
+    /** t116：待应用提示（②）——仅 nbDirty() 为真时显示
+     *  宽表数据：N 处改动 + 预计条件数（卡片数；合并卡算 1、拆成块后每块算 1。实际可能因空壳条件清理略有出入 → 「约」）
+     *  其它数据：只显示 N 处改动（标准格式合并按记录名映射，无法可靠预测条件数） */
+    function nbPendingText() {
+      var b = previewData.board;
+      if (!b || !nbDirty()) return '';
+      var isEn = (typeof I18N !== 'undefined' && I18N.getLang() === 'en');
+      var n = (b.history && b.history.length) || 0;
+      var src = previewData.srcData;
+      if (src && src.plainFixed) {
+        var now = (src.conditions && src.conditions.length) || 0;
+        return isEn
+          ? ('Pending: ' + n + ' change(s) · conditions ' + now + ' → ~' + b.cards.length)
+          : ('待应用：' + n + ' 处改动 · 条件 ' + now + ' → 约 ' + b.cards.length);
+      }
+      return isEn ? ('Pending: ' + n + ' change(s)') : ('待应用：' + n + ' 处改动');
     }
     function nbToolbarHtml() {
       var b = previewData.board;
       // t101：取消合并（toggleMerge）已移除——语义冗余（显示展开破坏 dirty 组决策；恢复合并与「还原此组/恢复原始分组」重复）——
       // 由视图切换（viewseg）+ 组操作（还原此组 t95）+ 全盘恢复（t75）承担
       var isEn = (typeof I18N !== 'undefined' && I18N.getLang() === 'en');
+      var pend = nbPendingText();
       var html = '<div class="nb-toolbar">' +
         '<input type="text" class="nb-search" placeholder="' + esc(nbT('nameBoard.search')) + '" value="' + esc(b.search) + '">' +
         '<label><input type="checkbox" class="nb-chk-un"' + (b.onlyUn ? ' checked' : '') + '> ' + esc(nbT('nameBoard.onlyUn')) + '</label>' +
         '<button type="button" class="nb-btn" data-nbop="selAll">' + esc(nbT('nameBoard.selAll')) + '</button>' +
         '<button type="button" class="nb-btn" data-nbop="clearSel">' + esc(nbT('nameBoard.clear')) + '</button>' +
         '<button type="button" class="nb-btn" data-nbop="undo">' + esc(isEn ? '↺ Undo (' + b.undo.length + ')' : '↺ 撤销（' + b.undo.length + '）') + '</button>' +
-        '<label><input type="checkbox" class="nb-chk-save"' + (b.persist ? ' checked' : '') + '> ' + esc(nbT('nameBoard.persist')) + '</label></div>'; // t115：撤销栈计数（可回退 N 步）
+        '<label><input type="checkbox" class="nb-chk-save"' + (b.persist ? ' checked' : '') + '> ' + esc(nbT('nameBoard.persist')) + '</label>' +
+        '<span class="nb-pending"' + (pend ? '' : ' hidden') + '>' + esc(pend) + '</span></div>'; // t115：撤销栈计数（可回退 N 步）；t116：待应用提示
       html += '<div class="nb-hint">' + esc(isEn ? 'Drag a rectangle to select; Ctrl+click for multi-select.' : '拖拽矩形框选；Ctrl+点击多选。') + '</div>';
       return html;
     }
@@ -8563,6 +9270,15 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         setTimeout(function () { nbBlockClick = false; }, 0);
       }
     });
+    /** t116：关闭分组面板前的「有改动未应用」确认（②；须先于 pvModal 的关闭逻辑） */
+    function nbConfirmDiscard() {
+      if (!nbDirty()) return true;
+      var isEn = (typeof I18N !== 'undefined' && I18N.getLang() === 'en');
+      var n = (previewData.board.history && previewData.board.history.length) || 0;
+      return window.confirm(isEn
+        ? (n + ' change(s) not applied — they will be lost if you close. Close anyway?')
+        : ('有 ' + n + ' 处改动未应用，关闭后不会生效。仍要关闭吗？'));
+    }
     var pvKeep = $('name-preview-keep');
     if (pvKeep) pvKeep.addEventListener('click', function () {
       var m = $('name-preview-modal');
@@ -8578,6 +9294,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       }
       try {
         // R1：应用重算切换分组模型管线（buildGroupModel→groupsToConditions——行为等价，模型层承载归属视图）
+        P.setPlainGroupMap(src.plainMap || null); // R10：宽表位置级决策（已拆分的块）不因画板应用而丢失
         var nd = P.buildGroupModel(src.rawText, src.fileName || '');
         if (nd) nd = P.groupsToConditions(nd);
         if (!nd) throw new Error('reparse null');
@@ -8599,6 +9316,9 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           });
         }
         nd.rawText = src.rawText; // t75：恢复可逆——重算产物保留原文（后续「恢复原始分组」仍可还原）
+        nd.plainMap = src.plainMap || null; // R10：位置级决策随数据对象携带（拆分态在画板应用后保持）
+        nd.mergeChain = src.mergeChain ? JSON.parse(JSON.stringify(src.mergeChain)) : null; // t117：合并链随数据对象携带（逐步拆分数据源）
+        nbPruneChain(nd); // t117：与重算结果不符的链就地清除（平铺还原/条件改名后，旧链不得留用）
         // R3：可逆状态机——应用完成 = 规则快照 + GROUP_APPLIED 状态位（恢复=快照清零+规则清除+模型重算——与 t75 恢复语义统一）
         state.groupApplied = true;
         state.groupRulesSnapshot = {
@@ -8630,6 +9350,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       }
       // t39：手动分组画板方案（视图=manual 且方案相对初始有改动）
       if (previewData.boardView === 'manual' && previewData.board && nbDirty()) {
+        pushGroupUndo(); // t116：落地前压快照（撤销上一次应用用）
         var bm = {};
         previewData.board.cards.forEach(function (card) {
           card.ri.forEach(function (ri) {
@@ -8644,10 +9365,51 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
             bm[row.name] = boardKeyFor(card, ri); // t45：board 键（dirty 组名/恒等/方向回退）——条件名=用户数据不翻译
           });
         });
+        // R10：宽表——把画板的块级决策同步写成「位置级映射」（块位置 → 条件名）。
+        //  与条件名级映射叠加：位置级定「这个块属于哪个条件」，条件名级定「这个条件并入哪个组」。
+        //  逐卡遍历即可覆盖全部块：拆出来的块卡带 blockPos；未拆的容器卡由其 plainBlocks 整段覆盖。
+        if (previewData.srcData && previewData.srcData.plainFixed) {
+          var pm = {};
+          previewData.board.cards.forEach(function (card) {
+            card.ri.forEach(function (ri) {
+              var row = previewData.rows[ri];
+              if (!row) return;
+              var ck = boardKeyFor(card, ri);
+              if (row.blockPos !== undefined) pm[row.blockPos] = ck;
+              else if (row.plainBlocks && row.plainBlocks.length) {
+                row.plainBlocks.forEach(function (bb) { pm[bb.pos] = ck; });
+              }
+            });
+          });
+          previewData.srcData.plainMap = pm;
+        }
+        // t117：合并链落盘——画板「每一步合并后的成员集合」随数据对象携带（逐步拆分的数据源），与 plainMap 并存互不覆盖。
+        //  ≥1 步即收集（分次「合并→应用」时链要跨应用累积）；已存在且仍与当前条件一致的链继承保留。
+        var mc = {}, mcN = 0;
+        var srcMC = previewData.srcData;
+        if (srcMC && srcMC.mergeChain) {
+          Object.keys(srcMC.mergeChain).forEach(function (k) {
+            var chK = nbChainOf(srcMC, k); // 校验（脏链自清）
+            if (chK && chK.length) { mc[k] = chK; mcN++; }
+          });
+        }
+        previewData.board.cards.forEach(function (card) {
+          if (!card.mergeSteps || !card.mergeSteps.length) return;
+          var stepsC = nbStepsNorm(nbStepsCopy(card.mergeSteps));
+          if (!stepsC.length) return;
+          var ri0 = (card.ri && card.ri.length) ? card.ri[0] : -1;
+          var ck = (ri0 >= 0) ? (boardKeyFor(card, ri0) || card.key) : card.key; // 应用键（合并卡=组名）
+          if (!ck) return;
+          if (!stepsC[stepsC.length - 1].name) stepsC[stepsC.length - 1].name = ck; // R10-1：末步组名=应用键
+          mc[ck] = stepsC;
+          mcN++;
+        });
+        if (srcMC) srcMC.mergeChain = mcN ? mc : null;
         // t91：连续应用规则链式累计——应用态下再次分组：本轮 bm 键=上一轮映射值（条件名）→ 合成后
         // （记录名→上一轮条件名→本轮组名）再以 rawText 重算——叠加合并语义（23→20→18；不丢第一轮）
         // t107：series 态链式——board 出现成员卡（bm 键=记录名 strip 后条件名）时成员优先（拆分态拆回）
         var prev = (state.groupApplied && state.groupRulesSnapshot && state.groupRulesSnapshot.manual) ? state.groupRulesSnapshot.manual : null;
+        if (!prev && state.groupApplied) prev = nbPrevMapOfData(previewData.srcData || currentData()); // N8 修：快照缺失时的翻译源
         if (prev) {
           var chained = {};
           Object.keys(prev).forEach(function (k) {
@@ -8680,6 +9442,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       }
       var hasRowCust = previewData.rows.some(function (r) { return r.custom; });
       if (hasOps || hasRowCust) {
+        pushGroupUndo(); // t116：落地前压快照
         // t37：组级批量操作落地 = manual 映射（零新对象；优先级链不变：guided 清空后 manual 生效）
         var map = {};
         previewData.rows.forEach(function (row, ri) {
@@ -8693,6 +9456,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         });
         // t91：组级路径同样链式累计（应用态下再分组叠加）；t107：成员优先公式（同手动）
         var prevM = (state.groupApplied && state.groupRulesSnapshot && state.groupRulesSnapshot.manual) ? state.groupRulesSnapshot.manual : null;
+        if (!prevM && state.groupApplied) prevM = nbPrevMapOfData(previewData.srcData || currentData()); // N8 修：同上（组级路径同款翻译源）
         if (prevM) {
           var chainedM = {};
           Object.keys(prevM).forEach(function (k) {
@@ -8725,6 +9489,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           T.showToast(isEn ? 'Mark at least one block as the condition first.' : '请先标记至少一个「条件」块。');
           return;
         }
+        pushGroupUndo(); // t116：落地前压快照（guided 自动路径）
         P.saveGuidedRuleToStorage({ mode: 'guided', parts: parts, compiled: '' });
         P.saveNameManualMapToStorage(null); // 清旧 manual 残留（自动路径）
       }
@@ -8735,13 +9500,28 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     }
     var pvApply = $('name-preview-apply');
     if (pvApply) pvApply.addEventListener('click', applyPreview);
+    /* R10-2 修：撤销后面板里的画板内容已陈旧（数据已回滚，画板还是撤销前的决策），
+     *  再点「应用」会把撤销前的 plainMap/映射重新落地 = 静默回滚撤销。
+     *  故绑定处自己接管 click（undo + 关面板 + 置空 previewData，与 apply/恢复原始分组同口径），
+     *  不再走 bindGroupUndoBtn——否则会绑上第二个监听器把撤销连做两次。 */
+    (function () {
+      var b = $('name-preview-undo-apply');
+      if (b) b.addEventListener('click', function () {
+        undoLastApply();
+        var mm0 = $('name-preview-modal');
+        if (mm0 && !mm0.hidden) { mm0.hidden = true; previewData = null; }
+      });
+      refreshGroupUndoBtn();
+    })();
     var pvClear = $('name-preview-clear');
     if (pvClear) pvClear.addEventListener('click', function () {
       // t75：恢复原始分组（应用可逆）——清规则（guided/manual 内存+存储）→ 原始文本无规则重解析 → 还原数据 + 条件列表回流
       P.saveGuidedRuleToStorage(null);
       P.saveNameManualMapToStorage(null);
+      P.setPlainGroupMap(null); // R10：宽表位置级决策一并清除（恢复=回到顺序切组默认）
       var restored = false;
       var cur = currentData();
+      if (cur) cur.mergeChain = null; // t117：合并链一并清除（恢复=回到原始条件；与 plainMap 清空同位）
       if (cur && cur.rawText) {
         try {
           // R1：恢复走分组模型管线（buildGroupModel→groupsToConditions——与应用同源；行为等价）
@@ -8749,6 +9529,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
           if (nd) nd = P.groupsToConditions(nd);
           if (nd) {
             nd.rawText = cur.rawText; // t75：保持原文（下次恢复仍可还原）
+            nd.mergeChain = null; // t117：合并链不留（恢复=回到原始条件）
             var f = state.files[state.currentIndex];
             if (f) f.data = nd;
             restored = true;
@@ -8759,6 +9540,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
       state.groupApplied = false;
       state.groupRulesSnapshot = null;
       state.groupSeriesSnap = null; // t105：系列合并决策快照一并清除（恢复=全量）
+      clearGroupUndo(); // t116：全量恢复 → 应用撤销栈一并清空（栈内快照已无意义）
       renderAll(); // 左侧条件列表/汇总/详情/图表同步回流（含 prefs 按名匹配）
       var m = $('name-preview-modal');
       if (m) m.hidden = true;
@@ -8769,7 +9551,12 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     });
     var pvModal = $('name-preview-modal');
     if (pvModal) {
-      pvModal.addEventListener('click', function (e) { if (e.target === pvModal) pvModal.hidden = true; });
+      // t116：未应用就关面板（点遮罩空白处）先问一次；「全部保持原样」按钮不问（那本来就是放弃预览）
+      pvModal.addEventListener('click', function (e) {
+        if (e.target !== pvModal) return;
+        if (!nbConfirmDiscard()) return;
+        pvModal.hidden = true;
+      });
       // t61③：滚轮穿透——面板内滚动容器（np-scroll/滚动区）滚到边界时阻止，主页面不随滚；t71：滚动容器换为 .nb-scrollbody（nb-grid 已在滚动区内自然伸展，不再自滚）
       // t93：np-scroll 已取消内滚（t85 单滚动层）——非滚动容器不作边界判定（否则 scrollTop=0/无余量 → 全部 preventDefault——内容区滚轮偶发失效）
       pvModal.addEventListener('wheel', function (e) {
@@ -8989,19 +9776,10 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     JVMain._maybeShowNameGuideOrPreview = maybeShowNameGuideOrPreview;
     JVMain._loadGuideSkip = loadGuideSkip; // 供测试（重置「不再提示」场景同步模块变量）
 
-    /* ---------- 第三十七批方案B：手动合并/拆分（整理模式） ---------- */
-    var condMode = $('cond-merge-mode');
-    var condMergeBtn = $('cond-merge-btn');
-    var condExit = $('cond-merge-exit');
-    if (condMode) condMode.addEventListener('click', toggleMergeMode);
-    if (condMergeBtn) condMergeBtn.addEventListener('click', doMergeSelected);
-    if (condExit) condExit.addEventListener('click', toggleMergeMode);
-    var cmModal = $('cond-merge-modal');
-    var cmOk = $('cond-merge-ok');
-    var cmCancel = $('cond-merge-cancel');
-    if (cmOk) cmOk.addEventListener('click', confirmManualMerge);
-    if (cmCancel) cmCancel.addEventListener('click', function () { if (cmModal) cmModal.hidden = true; });
-    if (cmModal) cmModal.addEventListener('click', function (e) { if (e.target === cmModal) cmModal.hidden = true; });
+    /* ---------- t116：左栏「整理模式」合并入口已删除 ----------
+     *  条件合并统一由条件分组面板（🧩 分组 → 手动画板：框选/Ctrl 多选 →「归为一组」→「应用」）承担。
+     *  左栏仅保留「⤢ 拆分」（已合并条件 / 宽表容器条件），见 splitCondition。
+     *  P.mergeConditions / cond.merged / cond.mergedFrom 语义保留（历史数据与旧会话合并产物仍可拆）。 */
     if (pdfModal) pdfModal.addEventListener('click', function (e) { if (e.target === pdfModal) pdfModal.hidden = true; });
 
     // 第三十二批：均值标记/原始数据点复选框已删除（⚙ 调整格式器内已有对应开关，避免重复入口）
@@ -9121,6 +9899,14 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
   }
 
   function addFile(name, data) {
+    P.setPlainGroupMap(null); // R10：新载入文件 → 清空上一文件的宽表位置级分组决策（位置语义只对原文件有效）
+    clearGroupUndo(); // t116：载入新文件 → 应用撤销栈清空（快照只对原文件有效）
+    /* R10-3 修：应用态快照同为「按文件有效」——载入新文件即失效。
+     *  不清会把上一文件的 manual 快照当成本轮链式累计的起点（新文件记录名全不在旧映射里 →
+     *  manual 模式不激活 → 用户在新文件上的分组点「应用」静默无效）。 */
+    state.groupApplied = false;
+    state.groupRulesSnapshot = null;
+    state.groupSeriesSnap = null;
     // 第十九批：初始无显式 Base 时，自动把第一个条件设为 Base（画 ⚑、参与对比，一切与手动点选相同；
     // 用户点「设为Base」取消后 first=false，不再自动重设——与隐式对比（第十八批）的差别就在可取消）
     var anyFirst = false;
@@ -9322,56 +10108,169 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
   }
 
   /* ================================================================
-   * 第三十七批方案B：条件面板手动合并/拆分（整理模式）
+   * t116：分组「应用」撤销栈（④）——应用也能逐步回退
+   *   每次分组面板「应用」（applyPreview）落地前压入一份分组态快照（上限 20）；
+   *   「↶ 撤销上一次应用」弹栈 → 按快照恢复三类规则 → 当前文件重算 → renderAll。
+   *   快照字段：manual（条件名级映射）/ plainMap（宽表位置级映射，位于 data.plainMap）/
+   *             guided（块规则）/ applied（GROUP_APPLIED 状态位）/ snap（groupRulesSnapshot）
    * ================================================================ */
-  function refreshMergeBtn() {
-    var btn = $('cond-merge-btn');
-    if (btn) btn.textContent = (typeof I18N !== 'undefined' && I18N.getLang() === 'en') ? ('Merge selected (' + state.condMergeSelected.length + ')') : ('合并所选（' + state.condMergeSelected.length + '）');
-    if (btn) btn.disabled = state.condMergeSelected.length < 2;
+  var GROUP_UNDO_MAX = 20;
+  function groupUndoCount() { return (state.groupUndoStack && state.groupUndoStack.length) || 0; }
+  /** R10-5：名称规则落盘判定——只有「存储里本来就有规则」（persist=ON 的用户）才回写存储，
+   *  否则仅改内存。此前逐步退出/撤销一律 saveNameManualMapToStorage，会把整张会话级映射
+   *  （含未退出的合并项与恒等项）提升为持久化，重启后同名文件自动复活该规则。 */
+  function saveManualMapFor(m) {
+    var had = false;
+    try { had = !!(typeof localStorage !== 'undefined' && localStorage.getItem('jv_name_rule_manual')); } catch (e) { had = false; }
+    if (had && P.saveNameManualMapToStorage) P.saveNameManualMapToStorage(m);
+    else if (P.setNameManualMap) P.setNameManualMap(m);
   }
-  function toggleMergeMode() {
-    state.condMergeMode = !state.condMergeMode;
-    state.condMergeSelected = [];
-    var mode = $('cond-merge-mode'), mergeBtn = $('cond-merge-btn'), exitBtn = $('cond-merge-exit');
-    if (mode) mode.hidden = state.condMergeMode;
-    if (mergeBtn) mergeBtn.hidden = !state.condMergeMode;
-    if (exitBtn) exitBtn.hidden = !state.condMergeMode;
-    refreshMergeBtn();
-    renderAll();
+  /** 当前分组态快照（深拷贝——快照后原对象会被应用流程改写） */
+  function groupSnapshot() {
+    var cur = currentData();
+    var snap = state.groupRulesSnapshot;
+    return {
+      manual: (P.getNameManualMap ? P.getNameManualMap() : null),
+      plainMap: (cur && cur.plainMap) ? JSON.parse(JSON.stringify(cur.plainMap)) : null,
+      mergeChain: (cur && cur.mergeChain) ? JSON.parse(JSON.stringify(cur.mergeChain)) : null, // t117：合并链一并快照（撤销应用后链不错位）
+      guided: (P.getGuidedRule ? P.getGuidedRule() : null),
+      applied: state.groupApplied,
+      snap: snap ? { guided: snap.guided || null, manual: snap.manual ? JSON.parse(JSON.stringify(snap.manual)) : null } : null
+    };
   }
-  function doMergeSelected() {
-    var data = currentData();
-    if (!data || state.condMergeSelected.length < 2) return;
-    // 预填合并名：第一个选中条件名（用户可改）
-    var input = $('cond-merge-name');
-    if (input) input.value = state.condMergeSelected[0];
-    var msg = $('cond-merge-msg');
-    if (msg) msg.textContent = (typeof I18N !== 'undefined' && I18N.getLang() === 'en') ? ('Merge ' + state.condMergeSelected.length + ' selected conditions into one statistic (devices carry source tags, see detail table; can be split later): ' + state.condMergeSelected.join(', ')) : ('将所选 ' + state.condMergeSelected.length + ' 个条件合并为一个条件统计（器件会标注来源，详情表可查；拆分可随时还原）：' + state.condMergeSelected.join('、'));
-    var modal = $('cond-merge-modal');
-    if (modal) modal.hidden = false;
+  function pushGroupUndo() {
+    if (!state.groupUndoStack) state.groupUndoStack = [];
+    state.groupUndoStack.push(groupSnapshot());
+    if (state.groupUndoStack.length > GROUP_UNDO_MAX) state.groupUndoStack.shift();
+    refreshGroupUndoBtn();
   }
-  function confirmManualMerge() {
-    var data = currentData();
-    if (!data) return;
-    var input = $('cond-merge-name');
-    var target = input ? input.value.trim() : '';
-    if (!target) { T.showToast('请输入合并后的条件名'); return; }
-    if (state.condMergeSelected.indexOf(target) < 0 && data.conditions.some(function (c) { return c.name === target; })) {
-      // 目标已存在且不在选中集：允许（并入现有同名条件）
+  function clearGroupUndo() {
+    state.groupUndoStack = [];
+    refreshGroupUndoBtn();
+  }
+  /** 撤销按钮 + 「恢复原始分组」文案（栈非空时补「将撤销 N 次应用」提示） */
+  function refreshGroupUndoBtn() {
+    var isEn = (typeof I18N !== 'undefined' && I18N.getLang() === 'en');
+    var n = groupUndoCount();
+    var btn = $('name-preview-undo-apply');
+    if (btn) {
+      btn.textContent = isEn ? ('↶ Undo last apply (' + n + ' left)') : ('↶ 撤销上一次应用（剩 ' + n + ' 次）');
+      btn.disabled = n === 0;
     }
-    migratePrefsMerge(target, state.condMergeSelected);
-    data.conditions = P.mergeConditions(data.conditions, target, state.condMergeSelected);
-    data.stats.conditionCount = data.conditions.length;
-    $('cond-merge-modal').hidden = true;
-    toggleMergeMode(); // 退出整理模式并重渲染
-    T.showToast('已合并为「' + target + '」');
+    var clr = $('name-preview-clear');
+    if (clr) {
+      var base = (typeof I18N !== 'undefined') ? I18N.t('namePreview.clear') : '恢复原始分组';
+      if (!base || base === 'namePreview.clear') base = '恢复原始分组'; // 词典缺键兜底（t() 缺键返回键名）
+      clr.textContent = base + (n > 0 ? (isEn ? (' (undoes ' + n + ' applied step(s))') : ('（将撤销 ' + n + ' 次应用）')) : '');
+    }
+  }
+  /** 弹栈 → 恢复规则 → 当前文件重算（与应用同源：buildGroupModel→groupsToConditions） */
+  function undoLastApply() {
+    if (!groupUndoCount()) return;
+    var isEn = (typeof I18N !== 'undefined' && I18N.getLang() === 'en');
+    var snap = state.groupUndoStack.pop();
+    // ① 三类规则按快照恢复（存储 + 内存同写——与应用路径同一套 API，保证刷新后语义一致）
+    //   R10-5：名称规则走「会话级 vs 持久化」判定（persist=OFF 的用户不该被一次撤销写成持久规则）
+    saveManualMapFor(snap.manual || null);
+    P.setPlainGroupMap(snap.plainMap || null);
+    if (P.saveGuidedRuleToStorage) P.saveGuidedRuleToStorage(snap.guided || null);
+    else if (P.setGuidedRule) P.setGuidedRule(snap.guided || null);
+    // ② 当前文件按原文重算（含宽表位置级决策——否则拆分态残留）
+    var cur = currentData();
+    var rebuilt = false;
+    if (cur && cur.rawText) {
+      try {
+        var nd = P.buildGroupModel(cur.rawText, cur.fileName || '');
+        if (nd) nd = P.groupsToConditions(nd);
+        if (nd) {
+          nd.conditions = nd.conditions.filter(function (c) { return c.devices.length > 0; });
+          nd.stats.conditionCount = nd.conditions.length;
+          nd.rawText = cur.rawText;
+          nd.plainMap = snap.plainMap || null;
+          nd.mergeChain = snap.mergeChain ? JSON.parse(JSON.stringify(snap.mergeChain)) : null; // t117：链按快照恢复
+          var f = state.files[state.currentIndex];
+          if (f) f.data = nd;
+          rebuilt = true;
+        }
+      } catch (e) { /* 重算失败 → 规则已回退，下方提示重新加载 */ }
+    }
+    // ③ 状态位 + 规则快照回到应用前
+    state.groupApplied = !!snap.applied;
+    state.groupRulesSnapshot = snap.snap;
+    refreshGroupUndoBtn();
+    renderAll();
+    T.showToast(isEn
+      ? (rebuilt ? 'Undid the last apply.' : 'Rules rolled back — re-load the file to see it.')
+      : (rebuilt ? '已撤销上一次应用' : '规则已回退——重新加载文件后生效'));
+  }
+  /* 注：R10-2 后 bindGroupUndoBtn 已删除——撤销按钮的绑定收归 init（需在撤销成功后关面板并置空
+   * previewData，而 previewData 是 init 闭包变量，模块层函数够不到）。*/
+
+  /* ================================================================
+   * t116：条件合并（原「整理模式」refreshMergeBtn/toggleMergeMode/doMergeSelected/confirmManualMerge）
+   *   已整体删除——合并入口统一到条件分组面板的手动画板。
+   *   注：migratePrefsMerge（上方）保留——它仍被系列合并路径 migratePrefsForMerge 使用。
+   * ================================================================ */
+  /** R10：宽表容器「按块拆分」命名方案——跨条件唯一化（撞名追加 (2)/(3)…，与解析器重名约定一致）。
+   *  条件装配层按「同名 = 同条件」并组，重名会把不同原始条件的块静默混进同一个条件 → 这里统一把关。
+   *  左栏 ⤢ 与画板卡内 ⛓ 拆分摊同一套命名，避免两处口径不一致。 */
+  function plainSplitPlan(data, condName, blocks) {
+    var taken = {};
+    ((data && data.conditions) ? data.conditions : []).forEach(function (c) { if (c.name !== condName) taken[c.name] = true; });
+    var plan = [];
+    (blocks || []).forEach(function (b) {
+      var base = b.name || ('Block-' + (b.pos + 1));
+      var label = base, n = 1;
+      while (taken[label] && n < 1000) { n++; label = base + '(' + n + ')'; }
+      taken[label] = true;
+      plan.push({ pos: b.pos, label: label });
+    });
+    return plan;
+  }
+  /** R10：按原文重算当前文件（走分组模型管线；宽表位置级决策随数据对象携带——拆分可逆、可与画板合并叠加） */
+  function rebuildFromRaw(data) {
+    if (!data || !data.rawText) return null;
+    try {
+      P.setPlainGroupMap(data.plainMap || null);
+      var nd = P.buildGroupModel(data.rawText, data.fileName || '');
+      if (nd) nd = P.groupsToConditions(nd);
+      if (!nd) return null;
+      nd.rawText = data.rawText;
+      nd.plainMap = data.plainMap || null;
+      nd.mergeChain = data.mergeChain ? JSON.parse(JSON.stringify(data.mergeChain)) : null; // t117：合并链随数据对象携带（逐步拆分/跨应用累积）
+      // t75：空壳清理——0 器件条件不留（防 processed 列空块/归并残留）
+      nd.conditions = nd.conditions.filter(function (c) { return c.devices.length > 0; });
+      nd.stats.conditionCount = nd.conditions.length;
+      return nd;
+    } catch (e) { return null; }
   }
   function splitCondition(name) {
     var data = currentData();
     if (!data) return;
     var cond = data.conditions.filter(function (c) { return c.name === name; })[0];
-    if (!cond || !cond.merged) return;
+    if (!cond) return;
     var tEn = (typeof I18N !== 'undefined' && I18N.getLang() === 'en'); // N1：拆分确认框双语化
+    /* R10：宽表容器（顺序切组/合并产物）→ 按块拆成独立条件（位置级决策；「恢复原始分组」整体可逆） */
+    if (!cond.merged && cond.plainBlocks && cond.plainBlocks.length > 1 && !cond.plainMerged) {
+      /* 拆出的块名必须「跨条件唯一」（见 plainSplitPlan：条件装配层按「同名 = 同条件」并组）。
+       *  目标条件自身名让给标签相同的块（同一份数据不换名）。 */
+      var plan = plainSplitPlan(data, name, cond.plainBlocks);
+      var labelList = plan.map(function (p) { return p.label; }).join(tEn ? ', ' : '、');
+      if (!window.confirm(tEn
+        ? ('Split "' + name + '" into ' + plan.length + ' separate conditions?\n' + labelList)
+        : ('确定把「' + name + '」拆成 ' + plan.length + ' 个独立条件吗？\n' + labelList))) return;
+      var pm = P.getPlainGroupMap() || {};
+      plan.forEach(function (p) { pm[p.pos] = p.label; });
+      data.plainMap = pm;
+      var nd = rebuildFromRaw(data);
+      if (!nd) { T.showToast(tEn ? 'Split failed — re-load the file.' : '拆分失败——请重新加载文件。'); return; }
+      var f = state.files[state.currentIndex];
+      if (f) f.data = nd;
+      renderAll();
+      T.showToast(tEn ? ('Split into ' + plan.length + ' conditions') : ('已拆分为 ' + plan.length + ' 个条件'));
+      return;
+    }
+    if (!cond.merged) return;
     var memberNames = (cond.mergedFrom || []).length ? (cond.mergedFrom || []).join(tEn ? ', ' : '、') : (tEn ? 'member conditions' : '成员条件');
     if (!window.confirm(tEn ? ('Split "' + name + '"? Will restore to: ' + memberNames) : ('确定拆分「' + name + '」吗？将还原为：' + memberNames))) return;
     data.conditions = P.splitConditions(data.conditions, name);
@@ -9476,16 +10375,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
     UI.renderConditionPanel(data, state.prefs, {
       colorOf: function (i) { return chartColor(i); },
       onChange: renderAll,
-      // 第三十七批方案B：合并/拆分
-      merging: state.condMergeMode,
-      selected: function (name) { return state.condMergeSelected.indexOf(name) >= 0; },
-      onToggleSelect: function (name) {
-        var i = state.condMergeSelected.indexOf(name);
-        if (i >= 0) state.condMergeSelected.splice(i, 1);
-        else state.condMergeSelected.push(name);
-        refreshMergeBtn();
-        renderAll(); // 重渲染更新选中高亮
-      },
+      // t116：左栏合并选择回调（merging/selected/onToggleSelect）已删除——合并入口统一到分组面板
       onSplit: splitCondition
     });
 
@@ -9507,7 +10397,21 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
   }
 
   function switchFile(index) {
+    var changed = (index !== state.currentIndex);
     state.currentIndex = index;
+    /* R10-3 修：撤销栈是会话级全局，而快照只对「原文件」有效（addFile 清栈、switchFile 原先不清）。
+     *  不清栈会出现：文件 B 的面板里弹出文件 A 的快照，A 的 plainMap 按位置污染 B。
+     *  切文件一并清栈 + 关面板（开着的面板属旧文件，下次打开自动重建）。
+     *  同理「应用态快照」（groupApplied/groupRulesSnapshot/groupSeriesSnap）也按文件有效——
+     *  不重置会把 A 的 manual 映射当成本轮链式累计起点，B 上的分组「应用」会因 manual 不激活而静默无效。 */
+    if (changed) {
+      clearGroupUndo();
+      state.groupApplied = false;
+      state.groupRulesSnapshot = null;
+      state.groupSeriesSnap = null;
+    }
+    var mmS = $('name-preview-modal');
+    if (mmS && !mmS.hidden) mmS.hidden = true;
     renderAll();
   }
 

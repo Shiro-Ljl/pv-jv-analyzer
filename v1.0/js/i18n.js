@@ -11,7 +11,7 @@
   var DICT = {
     /* ===== 工具栏 ===== */
     'toolbar.title': { zh: 'JV 数据分析工具', en: 'JV Data Analyzer' },
-    'doc.title': { zh: '钙钛矿太阳能电池 JV 数据分析工具 v1.1', en: 'Perovskite Solar Cell JV Data Analyzer v1.1' }, // t109：标签页标题（zh 侧与 index.html <title> 原文逐字一致）
+    'doc.title': { zh: '钙钛矿太阳能电池 JV 数据分析工具 v1.1.1', en: 'Perovskite Solar Cell JV Data Analyzer v1.1.1' }, // t109：标签页标题（zh 侧与 index.html <title> 原文逐字一致）
     'toolbar.addFiles': { zh: '＋ 添加文件', en: '+ Add Files' },
     'toolbar.addFilesTitle': { zh: '选择 CSV/TXT 文件（可多选）', en: 'Select CSV/TXT files (multiple allowed)' },
     'toolbar.dropHint': { zh: '拖入 CSV / TXT', en: 'Drop CSV / TXT' }, // t109：精简（title 提示详细说明）
@@ -107,9 +107,6 @@
 
     /* ===== 条件面板 ===== */
     'cond.label': { zh: '条件', en: 'Condition' },
-    'cond.merge': { zh: '☰ 整理', en: '☰ Group' },
-    'cond.mergeSelected': { zh: '合并所选（0）', en: 'Merge selected (0)' },
-    'cond.mergeExit': { zh: '退出', en: 'Exit' },
     'cond.baseMark': { zh: '未设首个条件', en: 'No base condition set' },
 
     /* ===== 视图标签 ===== */
@@ -141,9 +138,6 @@
     'modal.keepAll': { zh: '全部保持', en: 'Keep All' },
     'modal.mergeAll': { zh: '全部合并', en: 'Merge All' },
     'modal.apply': { zh: '应用', en: 'Apply' },
-    'modal.mergeTitle': { zh: '合并条件', en: 'Merge Conditions' },
-    'modal.mergeName': { zh: '合并后的条件名', en: 'Merged condition name' },
-    'modal.merge': { zh: '合并', en: 'Merge' },
 
     /* ===== PDF / 导出弹窗 ===== */
     'export.pdfTitle': { zh: '导出 PDF', en: 'Export PDF' },
@@ -268,9 +262,7 @@
     'st.titleGapY': { zh: 'Y 标题间距', en: 'Y title gap' },
     'st.titleGapX': { zh: 'X 标题间距', en: 'X title gap' },
     /* 条件面板/杂项 */
-    'cond.mergeSelected2': { zh: '合并所选', en: 'Merge selected' },
     'cond.exit': { zh: '退出', en: 'Exit' },
-    'cond.mergeModeTitle': { zh: '勾选多个条件合并为一个统计；已合并条件可拆分', en: 'Select conditions to merge into one statistic; merged conditions can be split' }
   };
 
   /* ---------------- 运行时整句翻译表（showToast 等动态文案） ---------------- */

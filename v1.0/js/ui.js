@@ -178,14 +178,20 @@
       row.appendChild(btn);
 
       // 第三十七批方案B：合并过的条件行内显示拆分按钮（把 merged 条件还原为原始成员）
-      if (cond.merged && callbacks.onSplit) {
+      // R10：宽表顺序切组/合并出的容器条件同样可拆（拆成独立块条件——按块位置，可整体恢复）
+      var plainBlocks = (cond.plainBlocks && cond.plainBlocks.length > 1 && !cond.plainMerged) ? cond.plainBlocks : null;
+      if ((cond.merged || plainBlocks) && callbacks.onSplit) {
         var splitBtn = document.createElement('button');
         splitBtn.type = 'button';
         splitBtn.className = 'cond-split-btn';
         splitBtn.textContent = '⤢';
-        splitBtn.title = (typeof I18N !== 'undefined' && I18N.getLang() === 'en')
-          ? ('Split: restore "' + cond.name + '" into ' + ((cond.mergedFrom || []).join(', ') || 'its members'))
-          : ('拆分：把「' + cond.name + '」还原为 ' + ((cond.mergedFrom || []).join('、') || '成员条件'));
+        splitBtn.title = plainBlocks
+          ? ((typeof I18N !== 'undefined' && I18N.getLang() === 'en')
+            ? ('Split: separate "' + cond.name + '" into ' + plainBlocks.length + ' independent conditions by block')
+            : ('拆分：把「' + cond.name + '」按块拆成 ' + plainBlocks.length + ' 个独立条件'))
+          : ((typeof I18N !== 'undefined' && I18N.getLang() === 'en')
+            ? ('Split: restore "' + cond.name + '" into ' + ((cond.mergedFrom || []).join(', ') || 'its members'))
+            : ('拆分：把「' + cond.name + '」还原为 ' + ((cond.mergedFrom || []).join('、') || '成员条件')));
         splitBtn.addEventListener('click', function (e) {
           e.stopPropagation();
           if (callbacks.onSplit) callbacks.onSplit(cond.name);
@@ -193,16 +199,7 @@
         row.appendChild(splitBtn);
       }
 
-      // 整理模式：整行点击切换合并选中（不干扰 input/checkbox/button 原生交互）
-      if (callbacks.merging) {
-        row.classList.add('cond-merging-row');
-        if (callbacks.selected && callbacks.selected(cond.name)) row.classList.add('cond-selected');
-        row.addEventListener('click', function (e) {
-          if (e.target.closest('input, button, .cond-drag-handle')) return;
-          if (callbacks.onToggleSelect) callbacks.onToggleSelect(cond.name);
-        });
-      }
-
+      // t116：整理模式整行点选（merging/selected/onToggleSelect）已删除——左栏不再承担合并入口
       list.appendChild(row);
     });
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>钙钛矿太阳能电池 JV 数据分析工具 v1.1</title>
+  <title>钙钛矿太阳能电池 JV 数据分析工具 v1.1.1</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
   <!-- S0 顶部工具栏 -->
   <header id="toolbar" class="toolbar">
     <div class="toolbar-left">
-      <span class="app-title"><span data-i18n="toolbar.title">JV 数据分析工具</span><span class="app-version">v1.1</span></span>
+      <span class="app-title"><span data-i18n="toolbar.title">JV 数据分析工具</span><span class="app-version">v1.1.1</span></span>
       <button id="btn-open" class="btn btn-primary" type="button" title="选择 CSV/TXT 文件（可多选）" data-i18n="toolbar.addFiles" data-i18n-title="toolbar.addFilesTitle">＋ 添加文件</button>
       <input type="file" id="file-input" multiple accept=".csv,.txt" hidden>
       <span class="drop-hint" title="把 CSV / TXT 拖到这里（可追加多个文件）" data-i18n="toolbar.dropHint" data-i18n-title="toolbar.dropHint">拖入 CSV / TXT</span>
@@ -52,12 +52,7 @@
       </div>
       <div id="cond-first-hint" class="cond-first-hint" data-i18n="cond.baseMark"></div>
       <div id="cond-list" class="cond-list"></div>
-      <!-- 第三十七批方案B：条件整理工具条（合并/拆分） -->
-      <div class="cond-merge-bar">
-        <button id="cond-merge-mode" class="btn btn-sm" type="button" title="勾选多个条件合并为一个统计；已合并条件可拆分" data-i18n="cond.merge" data-i18n-title="cond.mergeModeTitle">☰ 整理</button>
-        <button id="cond-merge-btn" class="btn btn-sm btn-primary" type="button" hidden data-i18n="cond.mergeSelected">合并所选（0）</button>
-        <button id="cond-merge-exit" class="btn btn-sm" type="button" hidden data-i18n="cond.mergeExit">退出</button>
-      </div>
+      <!-- t116：左栏「☰ 整理」合并工具条已删除——条件合并统一由分组面板承担 -->
     </aside>
 
     <!-- 页面导航卡片（同列下方，下滑时 sticky 吸附在工具栏下） -->
@@ -134,22 +129,6 @@
         <button id="group-btn-split-all" class="btn" type="button" data-i18n="modal.keepAll"></button>
         <button id="group-btn-merge-all" class="btn" type="button" data-i18n="modal.mergeAll"></button>
         <button id="group-btn-apply" class="btn btn-primary" type="button" data-i18n="modal.apply"></button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 第三十七批方案B：手动合并命名弹窗 -->
-  <div id="cond-merge-modal" class="modal-mask" hidden>
-    <div class="modal-box">
-      <div class="modal-title" data-i18n="modal.mergeTitle"></div>
-      <div id="cond-merge-msg" class="modal-msg"></div>
-      <label class="modal-field">
-        <span data-i18n="modal.mergeName"></span>
-        <input id="cond-merge-name" type="text" placeholder="PVK">
-      </label>
-      <div class="modal-actions">
-        <button id="cond-merge-cancel" class="btn" type="button" data-i18n="common.cancel"></button>
-        <button id="cond-merge-ok" class="btn btn-primary" type="button" data-i18n="modal.merge"></button>
       </div>
     </div>
   </div>
@@ -319,6 +298,7 @@
       <div class="modal-msg" data-i18n="namePreview.desc"></div>
       <div id="name-preview-body" class="name-preview-body"></div>
       <div class="modal-actions">
+        <button id="name-preview-undo-apply" class="btn" type="button" disabled></button>
         <button id="name-preview-keep" class="btn" type="button" data-i18n="namePreview.keep"></button>
         <button id="name-preview-apply" class="btn btn-primary" type="button" data-i18n="namePreview.apply"></button>
         <button id="name-preview-clear" class="btn" type="button" data-i18n="namePreview.clear"></button>
